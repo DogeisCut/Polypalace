@@ -1,16 +1,13 @@
-import { config } from "./config.js";
-import { state } from "./state.js";
-
 function setup() {
     createCanvas(windowWidth, windowHeight);
+    textAlign(CENTER, CENTER);
+    textFont(FONT_FAMILY);
 }
 
 function draw() {
-    background(20);
+    background(255);
 }
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
 }
-
-Object.assign(window, { setup, draw, windowResized });

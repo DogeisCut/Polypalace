@@ -8,5 +8,8 @@
   },
   "keywords": [],
   "author": "DogeisCut",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@types/p5": "^1.7.7"
+  }
 }

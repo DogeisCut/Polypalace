@@ -1,5 +1,3 @@
-import {p5} from "../../vendor/p5.js"
-
 class Player {
     constructor() {
         this.x = 0;
