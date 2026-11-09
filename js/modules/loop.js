@@ -6,6 +6,7 @@ const Loop = (() => {
             update = function(loop) {},
         } = {}) {
             this.fixedStep = fixedStep;
+            this.deltaTime = fixedStep; // Temp until i get some actual calculations
             this.update = update;
             this.maxUpdates = maxUpdates;
             this.reset();
@@ -24,7 +25,7 @@ const Loop = (() => {
             while(this.accumulator >= this.fixedStep) {
                 this.accumulator -= this.fixedStep;
                 this.time += this.fixedStep;
-                this.update(this.time, this)
+                this.update(this);
                 this.timesUpdated++;
                 if (this.timesUpdated > this.maxUpdates) {
                     this.accumulator = 0;

@@ -1,11 +1,11 @@
 const Vector2 = (() => {
+    const _vProto = Object.create(null)
+    _vProto[Symbol.iterator] = function*() {
+        yield this.x;
+        yield this.y;
+    }
     function _v(x, y) {
-        const v = Object.create({
-            *[Symbol.iterator]() {
-                yield this.x;
-                yield this.y;
-            }
-        })
+        const v = Object.create(_vProto)
         v.x = x
         v.y = y
         return Object.freeze(
