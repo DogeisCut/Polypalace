@@ -27,10 +27,13 @@ class Player {
     tick(loop) {
         const moveX = Input.is_action_down("right") - Input.is_action_down("left");
         const moveY = Input.is_action_down("down") - Input.is_action_down("up");
-        if (moveX < Number.EPSILON && moveY < Number.EPSILON) {
+        const length = Vector2.magnitude(moveX, moveY);
+        const targetX = (moveX / length) * PLAYER_MOVE_SPEED;
+        const targetY = (moveY / length) * PLAYER_MOVE_SPEED;
+        if (Math.abs(moveX) < Number.EPSILON && Math.abs(moveY) < Number.EPSILON) {
             [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, ...Vector2.ZERO, 1 - Math.pow(PLAYER_DECEL, loop.deltaTime))
         } else {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, moveX * PLAYER_MOVE_SPEED, moveY * PLAYER_MOVE_SPEED, 1 - Math.pow(PLAYER_ACCEL, loop.deltaTime))
+            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(PLAYER_ACCEL, loop.deltaTime))
         }
         this.move(loop);
     }

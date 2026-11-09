@@ -23,6 +23,7 @@ const Input = (() => {
     });
 
     window.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('blur', () => active_hardware.clear());
 
     const _eventProto = Object.create(null);
     _eventProto.is_event = true;
@@ -171,7 +172,7 @@ const Input = (() => {
             last_action_states.set(action, action_states.get(action));
 
             let is_down = false;
-            for (event of events) {
+            for (const event of events) {
                 const key_string = `${event.device}:${event.code}`
                 if (active_hardware.has(key_string)) {
                     is_down = true;

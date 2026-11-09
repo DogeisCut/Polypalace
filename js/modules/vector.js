@@ -30,7 +30,7 @@ const Vector2 = (() => {
     }
 
     function magnitude(x, y) {
-        return Math.hypot(x, y);
+        return Math.hypot(x, y) || 1;
     }
 
     function normalized(x, y) {
