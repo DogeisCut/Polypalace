@@ -2,16 +2,22 @@ const PLAYER_SIZE = 15;
 const PLAYER_TRAIL_LENGTH = 50;
 const PLAYER_TRAIL_DISTANCE_THRESHOLD = 1;
 const PLAYER_TURN_SPEED = 0.25;
+const PLAYER_BACK_OFFSET = PLAYER_SIZE * Math.cos(Math.PI * 2 / 3);
+const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin(Math.PI * 2 / 3);
 
 class Player {
     constructor() {
-        this.x = 100;
-        this.y = 100;
+        this.x = 0;
+        this.y = 0;
         this.speedX = 0;
         this.speedY = 0;
-        this.rotation = TAU / 8.0;
+        this.rotation = 0;
         this.trail = [];
         this.trailColor = 0;
+    }
+
+    _back_point() {
+        return Vector2.rotate(PLAYER_BACK_OFFSET, 0, this.rotation);
     }
 
     _move(loop) {
@@ -36,35 +42,37 @@ class Player {
     _draw_trail() {
         if (this.trail.length < 2) return;
 
-        strokeWeight(0);
-        colorMode(HSL);
-        fill(this.trailColor % 360, 100, 60);
-        beginShape();
-        for (let i = 0; i < this.trail.length; i++) {
-            const entry = this.trail[i];
-            const t = i / PLAYER_TRAIL_LENGTH;
+        strokeWeight(1);
+        colorMode(HSL, 360, 100, 100);
 
-            const size = Easing.ease("linear", t) * (PLAYER_SIZE / 1.2); // could just lerp here but i was playing arounf with different looks
+        for (let i = 0; i < this.trail.length - 1; i++) {
+            const a = this.trail[i];
+            const b = this.trail[i + 1];
 
-            const [ x2, y2 ] = Vector2.rotate(0, size, 0 + entry.rot)
-            vertex(x2 + entry.x, y2 + entry.y);
+            const sizeA = Easing.ease("linear", i / PLAYER_TRAIL_LENGTH) * (PLAYER_SIZE / 1.2); // could just lerp here but i was playing arounf with different looks
+            const sizeB = Easing.ease("linear", (i + 1) / PLAYER_TRAIL_LENGTH) * (PLAYER_SIZE / 1.2);
+
+            const [ ax1, ay1 ] = Vector2.rotate(0, sizeA, a.rot);
+            const [ ax2, ay2 ] = Vector2.rotate(0, sizeA, PI + a.rot);
+            const [ bx1, by1 ] = Vector2.rotate(0, sizeB, b.rot);
+            const [ bx2, by2 ] = Vector2.rotate(0, sizeB, PI + b.rot);
+
+            fill((i * 7 + this.trailColor) % 360, 100, 80);
+            stroke((i * 7 + this.trailColor) % 360, 100, 80)
+            quad(
+                a.x + ax1, a.y + ay1,
+                b.x + bx1, b.y + by1,
+                b.x + bx2, b.y + by2,
+                a.x + ax2, a.y + ay2,
+            );
         }
-        for (let i = this.trail.length - 1; i >= 0; i--) {
-            const entry = this.trail[i];
-            const t = i / PLAYER_TRAIL_LENGTH;
 
-            const size = Easing.ease("linear", t) * (PLAYER_SIZE / 1.2);
-            
-            const [ x1, y1 ] = Vector2.rotate(0, size, PI + entry.rot)
-            vertex(x1 + entry.x, y1 + entry.y);
-        }
-        endShape(CLOSE);
-        colorMode(RGB);
+        colorMode(RGB, 255, 255, 255);
     }
     
     draw(dt) {
         this._draw_trail();
-        this.trailColor += dt / 10;
+        this.trailColor += dt / 2;
         strokeWeight(2.5);
         fill("#fff0f9");
         stroke("#2b081d");
@@ -80,11 +88,13 @@ class Player {
     }
 
     _add_trail() {
+        const [backX, backY] = this._back_point();
+
         this.trail.push({
-            x: this.x,
-            y: this.y,
+            x: this.x + backX,
+            y: this.y + backY,
             rot: this.rotation,
-        })
+        });
         if (this.trail.length > PLAYER_TRAIL_LENGTH) {
             this.trail.shift();
         }
@@ -103,10 +113,6 @@ class Player {
         }
         this._move(loop);
 
-        const lastEntry = this.trail[this.trail.length - 1];
-
-        if (this.trail.length === 0 || Vector2.distance(lastEntry.x, lastEntry.y, this.x, this.y) > PLAYER_TRAIL_DISTANCE_THRESHOLD) {
-            this._add_trail();
-        }
+        this._add_trail();
     }
 }
