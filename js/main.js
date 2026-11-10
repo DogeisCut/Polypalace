@@ -67,7 +67,7 @@ window.setup = setup;
 function draw() {
     GameLoop.tick(deltaTime / 1000);
     View.begin();
-    player.draw(deltaTime);
+    player.draw(drawingContext, deltaTime);
     View.end();
 }
 window.draw = draw;

@@ -61,20 +61,21 @@ export class Player {
             const targetRotation = Vector2.angle(this.speedX, this.speedY);
             
             let diff = targetRotation - this.rotation;
-            while (diff < -Math.PI) diff += TAU;
-            while (diff > Math.PI) diff -= TAU;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
             
             const timeConstant = Easing.settleSecondsToTimeConstant(Config.PLAYER_TURN_SPEED);
             this.rotation += diff * Easing.dampFactor(loop.deltaTime, timeConstant);
         }
     }
 
-    _draw_trail() {
-        // we use raw canvas calls here because the trail is lowkey a little expensive to draw
+    /**
+     * @param ctx {CanvasRenderingContext2D}
+     */
+    _draw_trail(ctx) {
         const trail = this.trail;
         if (trail.length < 2) return;
 
-        const ctx = drawingContext;
         const hueBase = Math.floor(this.trailColor);
         ctx.save();
         ctx.lineWidth = 1;
@@ -103,17 +104,29 @@ export class Player {
         ctx.restore();
     }
 
-    _draw_ship() {
-        strokeWeight(2.5);
-        fill("#fff0f9");
-        stroke("#2b081d");
-        push();
-        translate(this.x, this.y);
-        rotate(this.rotation);
-        triangle(...PLAYER_TRIANGLE);
-        fill("#2b081d");
-        circle(PLAYER_SIZE / 4, 0, PLAYER_SIZE / 3);
-        pop();
+    /**
+     * @param ctx {CanvasRenderingContext2D}
+     */
+    _draw_ship(ctx) {
+        // triangle
+        ctx.lineWidth = 2.5;
+        ctx.fillStyle = "#fff0f9";
+        ctx.strokeStyle = "#2b081d";
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+        ctx.beginPath();
+        ctx.moveTo(PLAYER_TRIANGLE[0], PLAYER_TRIANGLE[1]);
+        ctx.lineTo(PLAYER_TRIANGLE[2], PLAYER_TRIANGLE[3]);
+        ctx.lineTo(PLAYER_TRIANGLE[4], PLAYER_TRIANGLE[5]);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+
+        // circle eye thingy
+        ctx.beginPath();
+        ctx.arc(PLAYER_SIZE / 4, 0, PLAYER_SIZE / 4, 0, Math.PI * 2)
+        ctx.fillStyle = "#2b081d";
+        ctx.fill();
     }
 
     _compute_bounds() {
@@ -132,20 +145,23 @@ export class Player {
         b.maxY += PLAYER_BOUNDS_PAD;
         return b;
     }
-    
-    draw(dt) {
+
+    /**
+     * @param ctx {CanvasRenderingContext2D}
+     */
+    draw(ctx, dt) {
         this.trailColor = (this.trailColor + dt / 2) % 360;
 
-        this._draw_warp_line();
+        this._draw_warp_line(ctx);
         const b = this._compute_bounds();
         Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
-            push();
-            translate(ox, oy);
-            this._draw_trail();
-            this._draw_ship();
-            pop();
+            ctx.save();
+            ctx.translate(ox, oy);
+            this._draw_trail(ctx);
+            this._draw_ship(ctx);
+            ctx.restore();
         });
-        this._draw_warp_point();
+        this._draw_warp_point(ctx);
     }
 
     _add_trail() {
@@ -163,8 +179,12 @@ export class Player {
         }
     }
 
-    _draw_warp_line() {
+    /**
+     * @param ctx {CanvasRenderingContext2D}
+     */
+    _draw_warp_line(ctx) {
         if (!this._has_warp_point()) return;
+
         const dx = Wrap.deltaX(this.x, this.savedX);
         const dy = Wrap.deltaY(this.y, this.savedY);
         const x2 = this.x + dx;
@@ -174,13 +194,15 @@ export class Player {
         Math.min(this.x, x2) - pad, Math.min(this.y, y2) - pad,
         Math.max(this.x, x2) + pad, Math.max(this.y, y2) + pad,
         (ox, oy) => {
-            push();
-            strokeWeight(3.5);
-            translate(ox, oy)
-            stroke("#00000020");
-            drawingContext.setLineDash([10]);
-            line(x2, y2, this.x, this.y);
-            pop();
+            ctx.save();
+            ctx.lineWidth = 3.5;
+            ctx.translate(ox, oy)
+            ctx.strokeStyle = "#00000020";
+            ctx.setLineDash([10]);
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(this.x, this.y);
+            ctx.stroke();
+            ctx.restore();
         })
     }
 
@@ -188,19 +210,26 @@ export class Player {
         return !(this.savedX == null || this.savedY == null)
     }
 
-    _draw_warp_point() {
+    /**
+     * @param ctx {CanvasRenderingContext2D}
+     */
+    _draw_warp_point(ctx) {
         if (!this._has_warp_point()) return;
+
         const r = PLAYER_SIZE * 1.1 + 2;
         Wrap.forEachCopy(this.savedX - r, this.savedY - r, this.savedX + r, this.savedY + r, (ox, oy) => {
-            push();
-            strokeWeight(2.5);
-            noFill();
-            stroke("#2b081d");
-            translate(this.savedX + ox, this.savedY + oy);
-            circle(0, 0, PLAYER_SIZE);
-            line(0, PLAYER_SIZE * 1.1, 0, -PLAYER_SIZE * 1.1);
-            line(PLAYER_SIZE * 1.1, 0, -PLAYER_SIZE * 1.1, 0);
-            pop();
+            ctx.save();
+            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = "#2b081d"
+            ctx.translate(this.savedX + ox, this.savedY + oy);
+            ctx.beginPath();
+            ctx.arc(0, 0, PLAYER_SIZE / 1.1, 0, Math.PI * 2);
+            ctx.moveTo(0, PLAYER_SIZE * 1.1);
+            ctx.lineTo(0, -PLAYER_SIZE * 1.1);
+            ctx.moveTo(PLAYER_SIZE * 1.1, 0);
+            ctx.lineTo(-PLAYER_SIZE * 1.1, 0);
+            ctx.stroke();
+            ctx.restore();
         });
     }
 
