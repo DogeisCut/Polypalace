@@ -19,6 +19,10 @@ Input.add_action("right")
 Input.add_event("right", Input.Key.RIGHT)
 Input.add_event("right", Input.Key.KEY_D)
 
+Input.add_action("warp")
+Input.add_event("warp", Input.Key.SPACE)
+Input.add_event("warp", Input.Mouse.LEFT)
+
 function setup() {
     createCanvas(windowWidth, windowHeight);
     textAlign(CENTER, CENTER);

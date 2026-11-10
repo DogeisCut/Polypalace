@@ -1,7 +1,6 @@
 const PLAYER_SIZE = 15;
 const PLAYER_TRAIL_LENGTH = 50;
 const PLAYER_TRAIL_DISTANCE_THRESHOLD = 1;
-const PLAYER_TURN_SPEED = 0.25;
 const PLAYER_BACK_OFFSET = PLAYER_SIZE * Math.cos(Math.PI * 2 / 3);
 const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin(Math.PI * 2 / 3);
 
@@ -14,6 +13,8 @@ class Player {
         this.rotation = 0;
         this.trail = [];
         this.trailColor = 0;
+        this.savedX = null;
+        this.savedY = null;
     }
 
     _back_point() {
@@ -71,8 +72,16 @@ class Player {
     }
     
     draw(dt) {
-        this._draw_trail();
         this.trailColor += dt / 2;
+        this._draw_copy()
+        translate(-width, 0);
+        this._draw_copy()
+        translate(width * 2, 0);
+        this._draw_copy()
+    }
+
+    _draw_copy() {
+        this._draw_trail();
         strokeWeight(2.5);
         fill("#fff0f9");
         stroke("#2b081d");
@@ -83,8 +92,11 @@ class Player {
             ...Vector2.rotate(PLAYER_SIZE, 0, TAU / 3),
             ...Vector2.rotate(PLAYER_SIZE, 0, (TAU / 3) * 2),
         );
+        fill("#2b081d");
+        circle(PLAYER_SIZE/4,0,PLAYER_SIZE/3);
         rotate(-this.rotation);
         translate(-this.x, -this.y);
+        this._draw_save_point();
     }
 
     _add_trail() {
@@ -100,6 +112,19 @@ class Player {
         }
     }
 
+    _draw_save_point() {
+        if (this.savedX != null && this.savedY != null) {
+            strokeWeight(2.5);
+            noFill();
+            stroke("#2b081d");
+            translate(this.savedX, this.savedY);
+            circle(0,0,PLAYER_SIZE);
+            line(0,PLAYER_SIZE*1.1,0,-PLAYER_SIZE*1.1);
+            line(PLAYER_SIZE*1.1,0,-PLAYER_SIZE*1.1,0);
+            translate(-this.savedX, -this.savedY);
+        }
+    }
+
     tick(loop) {
         const moveX = Input.is_action_down("right") - Input.is_action_down("left");
         const moveY = Input.is_action_down("down") - Input.is_action_down("up");
@@ -112,6 +137,27 @@ class Player {
             [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(PLAYER_ACCEL, loop.deltaTime))
         }
         this._move(loop);
+
+        if (Input.was_action_just_pressed("warp")) {
+            if (this.savedX == null || this.savedY == null) {
+                this.savedX = this.x
+                this.savedY = this.y
+            } else {
+                if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
+                    this.trail.shift();
+                }
+                this.rotation = Vector2.angle(this.savedX - this.x, this.savedY - this.y);
+                this._add_trail();
+                [ this.speedX, this.speedY ] = Vector2.rotate(...Vector2.RIGHT, this.rotation);
+                this.speedX *= PLAYER_WARP_SPEED_BOOST;
+                this.speedY *= PLAYER_WARP_SPEED_BOOST;
+                this.x = this.savedX;
+                this.y = this.savedY;
+                this.savedX = null;
+                this.savedY = null;
+                this._add_trail();
+            }
+        }
 
         this._add_trail();
     }
