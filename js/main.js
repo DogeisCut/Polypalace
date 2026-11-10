@@ -24,6 +24,8 @@ Input.add_event("warp", Input.Key.SPACE)
 Input.add_event("warp", Input.Mouse.LEFT)
 
 async function load_assets() {
+    await Sound.load("track1", "assets/sounds/music/track1.mp3")
+
     await Sound.load("warp_place", "assets/sounds/sfx/warp_place.wav")
     await Sound.load("warp_use", "assets/sounds/sfx/warp_use.wav")
     await Sound.load("wrap", "assets/sounds/sfx/wrap.wav")
@@ -39,7 +41,13 @@ async function setup() {
     fill("#fff0f9");
     stroke("#2b081d");
     player = new Player()
+
     await load_assets()
+
+    Sound.create_bus("sfx")
+    Sound.create_bus("music")
+
+    Sound.play("track1", {loop: true, bus: "music"})
 }
 
 function draw() {

@@ -198,6 +198,14 @@ class Player {
     }
 
     _warp() { // silly function because warp is one letter off from wrap.
+        const pitchScale = random(0.8, 1.2)
+        Sound.play("warp_use", {
+            volume: 0.25,
+            pan: this._get_player_sound_panning(),
+            bus: "sfx",
+            pitchScale,
+        });
+
         const dx = Wrap.deltaX(this.x, this.savedX);
         const dy = Wrap.deltaY(this.y, this.savedY);
 
@@ -217,7 +225,16 @@ class Player {
         this._add_trail();
         this._wrap();
 
-        Sound.play("warp_use");
+        Sound.play("warp_use", {
+            volume: 0.25,
+            pan: this._get_player_sound_panning(),
+            bus: "sfx",
+            pitchScale,
+        });
+    }
+
+    _get_player_sound_panning() {
+        return Easing.lerp(-1, 1, this.x/WORLD_WIDTH) / 2.0
     }
 
     tick(loop) {
@@ -237,7 +254,10 @@ class Player {
             if (this.savedX == null || this.savedY == null) {
                 this.savedX = this.x
                 this.savedY = this.y
-                Sound.play("warp_place");
+                Sound.play("warp_place", {
+                    volume: 0.5,
+                    pan: this._get_player_sound_panning()
+                });
             } else {
                 this._warp();
             }
