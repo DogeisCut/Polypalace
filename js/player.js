@@ -199,6 +199,7 @@ export class Player {
             ctx.translate(ox, oy)
             ctx.strokeStyle = "#00000020";
             ctx.setLineDash([10]);
+            ctx.beginPath();
             ctx.moveTo(x2, y2);
             ctx.lineTo(this.x, this.y);
             ctx.stroke();
