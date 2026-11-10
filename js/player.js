@@ -129,6 +129,7 @@ class Player {
     draw(dt) {
         this.trailColor = (this.trailColor + dt / 2) % 360;
 
+        this._draw_warp_line();
         const b = this._compute_bounds();
         Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
             push();
@@ -137,7 +138,7 @@ class Player {
             this._draw_ship();
             pop();
         });
-        this._draw_save_point();
+        this._draw_warp_point();
     }
 
     _add_trail() {
@@ -155,8 +156,33 @@ class Player {
         }
     }
 
-    _draw_save_point() {
-        if (this.savedX == null || this.savedY == null) return;
+    _draw_warp_line() {
+        if (!this._has_warp_point()) return;
+        const dx = Wrap.deltaX(this.x, this.savedX);
+        const dy = Wrap.deltaY(this.y, this.savedY);
+        const x2 = this.x + dx;
+        const y2 = this.y + dy;
+        const pad = 4;
+        Wrap.forEachCopy(
+        Math.min(this.x, x2) - pad, Math.min(this.y, y2) - pad,
+        Math.max(this.x, x2) + pad, Math.max(this.y, y2) + pad,
+        (ox, oy) => {
+            push();
+            strokeWeight(3.5);
+            translate(ox, oy)
+            stroke("#00000020");
+            drawingContext.setLineDash([10]);
+            line(x2, y2, this.x, this.y);
+            pop();
+        })
+    }
+
+    _has_warp_point() {
+        return !(this.savedX == null || this.savedY == null)
+    }
+
+    _draw_warp_point() {
+        if (!this._has_warp_point()) return;
         const r = PLAYER_SIZE * 1.1 + 2;
         Wrap.forEachCopy(this.savedX - r, this.savedY - r, this.savedX + r, this.savedY + r, (ox, oy) => {
             push();
