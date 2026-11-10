@@ -3,11 +3,17 @@ const PLAYER_TRAIL_LENGTH = 50;
 const PLAYER_TRAIL_DISTANCE_THRESHOLD = 1;
 const PLAYER_BACK_OFFSET = PLAYER_SIZE * Math.cos(Math.PI * 2 / 3);
 const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin(Math.PI * 2 / 3);
+const PLAYER_TRAIL_HALF_WIDTH = PLAYER_SIZE / 1.2;
+const PLAYER_BOUNDS_PAD = PLAYER_SIZE * 1.5; // covers ship, trail width, save marker, stroke
+
+// pre calculate the ship rendering :P
+const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
+const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
 
 class Player {
     constructor() {
-        this.x = 0;
-        this.y = 0;
+        this.x = WORLD_WIDTH / 2;
+        this.y = WORLD_HEIGHT / 2;
         this.speedX = 0;
         this.speedY = 0;
         this.rotation = 0;
@@ -15,6 +21,7 @@ class Player {
         this.trailColor = 0;
         this.savedX = null;
         this.savedY = null;
+        this._bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     }
 
     _back_point() {
@@ -25,6 +32,21 @@ class Player {
         this.x += this.speedX * loop.deltaTime;
         this.y += this.speedY * loop.deltaTime;
         this._face(loop);
+        this._wrap();
+    }
+
+    _wrap() {
+        const nx = Wrap.wrapX(this.x);
+        const ny = Wrap.wrapY(this.y);
+        const sx = nx - this.x;
+        const sy = ny - this.y;
+        if (sx === 0 && sy === 0) return;
+        this.x = nx;
+        this.y = ny;
+        for (const p of this.trail) {
+            p.x += sx;
+            p.y += sy;
+        }
     }
 
     _face(loop) {
@@ -41,61 +63,80 @@ class Player {
     }
 
     _draw_trail() {
-        if (this.trail.length < 2) return;
+        // we use raw canvas calls here because the trail is lowkey a little expensive to draw
+        const trail = this.trail;
+        if (trail.length < 2) return;
 
-        strokeWeight(1);
-        colorMode(HSL, 360, 100, 100);
+        const ctx = drawingContext;
+        const hueBase = Math.floor(this.trailColor);
+        ctx.save();
+        ctx.lineWidth = 1;
 
-        for (let i = 0; i < this.trail.length - 1; i++) {
-            const a = this.trail[i];
-            const b = this.trail[i + 1];
+        let a = trail[0];
+        let sizeA = Easing.ease("linear", 0) * PLAYER_TRAIL_HALF_WIDTH; // could just lerp here but i was playing arounf with different looks
+        for (let i = 0; i < trail.length - 1; i++) {
+            const b = trail[i + 1];
+            const sizeB = Easing.ease("linear", (i + 1) / PLAYER_TRAIL_LENGTH) * PLAYER_TRAIL_HALF_WIDTH;
 
-            const sizeA = Easing.ease("linear", i / PLAYER_TRAIL_LENGTH) * (PLAYER_SIZE / 1.2); // could just lerp here but i was playing arounf with different looks
-            const sizeB = Easing.ease("linear", (i + 1) / PLAYER_TRAIL_LENGTH) * (PLAYER_SIZE / 1.2);
+            const color = TRAIL_PALETTE[(i * 7 + hueBase) % 360];
+            ctx.fillStyle = color;
+            ctx.strokeStyle = color;
+            ctx.beginPath();
+            ctx.moveTo(a.x + a.nx * sizeA, a.y + a.ny * sizeA);
+            ctx.lineTo(b.x + b.nx * sizeB, b.y + b.ny * sizeB);
+            ctx.lineTo(b.x - b.nx * sizeB, b.y - b.ny * sizeB);
+            ctx.lineTo(a.x - a.nx * sizeA, a.y - a.ny * sizeA);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
 
-            const [ ax1, ay1 ] = Vector2.rotate(0, sizeA, a.rot);
-            const [ ax2, ay2 ] = Vector2.rotate(0, sizeA, PI + a.rot);
-            const [ bx1, by1 ] = Vector2.rotate(0, sizeB, b.rot);
-            const [ bx2, by2 ] = Vector2.rotate(0, sizeB, PI + b.rot);
-
-            fill((i * 7 + this.trailColor) % 360, 100, 80);
-            stroke((i * 7 + this.trailColor) % 360, 100, 80)
-            quad(
-                a.x + ax1, a.y + ay1,
-                b.x + bx1, b.y + by1,
-                b.x + bx2, b.y + by2,
-                a.x + ax2, a.y + ay2,
-            );
+            a = b;
+            sizeA = sizeB;
         }
-
-        colorMode(RGB, 255, 255, 255);
-    }
-    
-    draw(dt) {
-        this.trailColor += dt / 2;
-        this._draw_copy()
-        translate(-width, 0);
-        this._draw_copy()
-        translate(width * 2, 0);
-        this._draw_copy()
+        ctx.restore();
     }
 
-    _draw_copy() {
-        this._draw_trail();
+    _draw_ship() {
         strokeWeight(2.5);
         fill("#fff0f9");
         stroke("#2b081d");
+        push();
         translate(this.x, this.y);
         rotate(this.rotation);
-        triangle(
-            ...Vector2.rotate(PLAYER_SIZE, 0, 0),
-            ...Vector2.rotate(PLAYER_SIZE, 0, TAU / 3),
-            ...Vector2.rotate(PLAYER_SIZE, 0, (TAU / 3) * 2),
-        );
+        triangle(...PLAYER_TRIANGLE);
         fill("#2b081d");
-        circle(PLAYER_SIZE/4,0,PLAYER_SIZE/3);
-        rotate(-this.rotation);
-        translate(-this.x, -this.y);
+        circle(PLAYER_SIZE / 4, 0, PLAYER_SIZE / 3);
+        pop();
+    }
+
+    _compute_bounds() {
+        const b = this._bounds;
+        b.minX = b.maxX = this.x;
+        b.minY = b.maxY = this.y;
+        for (const p of this.trail) {
+            if (p.x < b.minX) b.minX = p.x;
+            else if (p.x > b.maxX) b.maxX = p.x;
+            if (p.y < b.minY) b.minY = p.y;
+            else if (p.y > b.maxY) b.maxY = p.y;
+        }
+        b.minX -= PLAYER_BOUNDS_PAD;
+        b.minY -= PLAYER_BOUNDS_PAD;
+        b.maxX += PLAYER_BOUNDS_PAD;
+        b.maxY += PLAYER_BOUNDS_PAD;
+        return b;
+    }
+    
+    draw(dt) {
+        this.trailColor = (this.trailColor + dt / 2) % 360;
+
+        const b = this._compute_bounds();
+        Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
+            push();
+            translate(ox, oy);
+            this._draw_trail();
+            this._draw_ship();
+            pop();
+        });
         this._draw_save_point();
     }
 
@@ -106,6 +147,8 @@ class Player {
             x: this.x + backX,
             y: this.y + backY,
             rot: this.rotation,
+            nx: -Math.sin(this.rotation), // optimization :P
+            ny: Math.cos(this.rotation),
         });
         if (this.trail.length > PLAYER_TRAIL_LENGTH) {
             this.trail.shift();
@@ -113,16 +156,40 @@ class Player {
     }
 
     _draw_save_point() {
-        if (this.savedX != null && this.savedY != null) {
+        if (this.savedX == null || this.savedY == null) return;
+        const r = PLAYER_SIZE * 1.1 + 2;
+        Wrap.forEachCopy(this.savedX - r, this.savedY - r, this.savedX + r, this.savedY + r, (ox, oy) => {
+            push();
             strokeWeight(2.5);
             noFill();
             stroke("#2b081d");
-            translate(this.savedX, this.savedY);
-            circle(0,0,PLAYER_SIZE);
-            line(0,PLAYER_SIZE*1.1,0,-PLAYER_SIZE*1.1);
-            line(PLAYER_SIZE*1.1,0,-PLAYER_SIZE*1.1,0);
-            translate(-this.savedX, -this.savedY);
+            translate(this.savedX + ox, this.savedY + oy);
+            circle(0, 0, PLAYER_SIZE);
+            line(0, PLAYER_SIZE * 1.1, 0, -PLAYER_SIZE * 1.1);
+            line(PLAYER_SIZE * 1.1, 0, -PLAYER_SIZE * 1.1, 0);
+            pop();
+        });
+    }
+
+    _warp() { // silly function because warp is one letter off from wrap.
+        const dx = Wrap.deltaX(this.x, this.savedX);
+        const dy = Wrap.deltaY(this.y, this.savedY);
+
+        if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
+            this.trail.shift();
         }
+        this.rotation = Vector2.angle(dx, dy);
+        this._add_trail();
+        [ this.speedX, this.speedY ] = Vector2.rotate(...Vector2.RIGHT, this.rotation);
+        this.speedX *= PLAYER_WARP_SPEED_BOOST;
+        this.speedY *= PLAYER_WARP_SPEED_BOOST;
+
+        this.x += dx;
+        this.y += dy;
+        this.savedX = null;
+        this.savedY = null;
+        this._add_trail();
+        this._wrap();
     }
 
     tick(loop) {
@@ -143,19 +210,7 @@ class Player {
                 this.savedX = this.x
                 this.savedY = this.y
             } else {
-                if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
-                    this.trail.shift();
-                }
-                this.rotation = Vector2.angle(this.savedX - this.x, this.savedY - this.y);
-                this._add_trail();
-                [ this.speedX, this.speedY ] = Vector2.rotate(...Vector2.RIGHT, this.rotation);
-                this.speedX *= PLAYER_WARP_SPEED_BOOST;
-                this.speedY *= PLAYER_WARP_SPEED_BOOST;
-                this.x = this.savedX;
-                this.y = this.savedY;
-                this.savedX = null;
-                this.savedY = null;
-                this._add_trail();
+                this._warp();
             }
         }
 

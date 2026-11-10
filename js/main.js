@@ -25,6 +25,8 @@ Input.add_event("warp", Input.Mouse.LEFT)
 
 function setup() {
     createCanvas(windowWidth, windowHeight);
+    pixelDensity(Math.min(window.devicePixelRatio || 1, 2)); // we could do with some quality settings later
+    View.resize();
     textAlign(CENTER, CENTER);
     textFont(FONT_FAMILY);
     strokeWeight(2.5);
@@ -35,8 +37,9 @@ function setup() {
 
 function draw() {
     GameLoop.tick(deltaTime / 1000);
-    background(255);
+    View.begin();
     player.draw(deltaTime);
+    View.end();
 }
 
 function tick(loop) {
@@ -46,4 +49,5 @@ function tick(loop) {
 
 function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
+    View.resize();
 }
