@@ -60,7 +60,7 @@ async function setup() {
     Sound.create_bus("sfx")
     Sound.create_bus("music")
 
-    Sound.play("track1", {loop: true, bus: "music"})
+    //Sound.play("track1", {loop: true, bus: "music"})
 }
 window.setup = setup;
 
