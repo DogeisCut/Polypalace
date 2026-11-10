@@ -7,5 +7,5 @@ export const PLAYER_WARP_SPEED_BOOST = 2500.0;
 export const WORLD_WIDTH = 1920;
 export const WORLD_HEIGHT = 1080;
 export const DEBUG = {
-    WRAPPING: true
+    WRAPPING: false
 }
