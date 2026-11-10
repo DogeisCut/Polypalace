@@ -256,7 +256,9 @@ class Player {
                 this.savedY = this.y
                 Sound.play("warp_place", {
                     volume: 0.5,
-                    pan: this._get_player_sound_panning()
+                    pan: this._get_player_sound_panning(),
+                    bus: "sfx",
+                    pitchScale = random(0.8, 1.2),
                 });
             } else {
                 this._warp();
