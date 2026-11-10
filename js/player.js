@@ -150,7 +150,7 @@ export class Player {
      * @param ctx {CanvasRenderingContext2D}
      */
     draw(ctx, dt) {
-        this.trailColor = (this.trailColor + dt / 2) % 360;
+        this.trailColor = (this.trailColor + dt * 600) % 360;
 
         this._draw_warp_line(ctx);
         const b = this._compute_bounds();
