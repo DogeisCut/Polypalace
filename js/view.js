@@ -6,40 +6,44 @@ export const View = (() => {
     let _offsetX = 0;
     let _offsetY = 0;
 
-    function resize() {
+    function resize(loop) {
+        const width = loop.canvas.width
+        const height = loop.canvas.height
+        const ctx = loop.ctx
         _scale = Math.min(width / Config.WORLD_WIDTH, height / Config.WORLD_HEIGHT);
         _offsetX = Math.floor((width - Config.WORLD_WIDTH * _scale) / 2);
         _offsetY = Math.floor((height - Config.WORLD_HEIGHT * _scale) / 2);
     }
 
-    function begin() {
-        background(BAR_COLOR);
-        push();
-        translate(_offsetX, _offsetY);
-        scale(_scale);
-        push();
-        noStroke();
-        fill(255);
-        rect(0, 0, Config.WORLD_WIDTH, Config.WORLD_HEIGHT);
-        pop();
+    function begin(loop) {
+        const ctx = loop.ctx
+        ctx.save();
+        ctx.translate(_offsetX, _offsetY);
+        ctx.scale(_scale, _scale);
+        ctx.fillStyle = "#ffffff"
+        ctx.beginPath();
+        ctx.rect(0, 0, Config.WORLD_WIDTH, Config.WORLD_HEIGHT);
+        ctx.fill();
     }
 
-    function end() {
-        pop();
-        push();
-        noStroke();
-        fill(BAR_COLOR);
+    function end(loop) {
+        const width = loop.canvas.width
+        const height = loop.canvas.height
+        const ctx = loop.ctx
+        ctx.restore();
+        ctx.fillStyle = BAR_COLOR;
+        ctx.beginPath();
         const right = _offsetX + Config.WORLD_WIDTH * _scale;
         const bottom = _offsetY + Config.WORLD_HEIGHT * _scale;
         if (_offsetX > 0) {
-            rect(0, 0, _offsetX, height);
-            rect(right, 0, width - right, height);
+            ctx.rect(0, 0, _offsetX, height);
+            ctx.rect(right, 0, width - right, height);
         }
         if (_offsetY > 0) {
-            rect(0, 0, width, _offsetY);
-            rect(0, bottom, width, height - bottom);
+            ctx.rect(0, 0, width, _offsetY);
+            ctx.rect(0, bottom, width, height - bottom);
         }
-        pop();
+        ctx.fill();
     }
 
     function toWorld(screenX, screenY) {

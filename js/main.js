@@ -1,3 +1,4 @@
+import { Draw } from "./modules/draw.js"
 import { Assets } from "./modules/assets.js"
 import { Easing } from "./modules/easing.js"
 import { Input } from "./modules/input.js"
@@ -10,9 +11,7 @@ import * as Config from "./config.js"
 import { Wrap } from "./wrap.js"
 
 let player = null
-const GameLoop = Loop.create({
-    update: (loop) => tick(loop)
-})
+
 
 Input.add_action("up")
 Input.add_event("up", Input.Key.UP)
@@ -42,43 +41,40 @@ async function load_assets() {
     await Sound.load("wrap", "assets/sounds/sfx/wrap.wav")
 }
 
-async function setup() {
-    createCanvas(windowWidth, windowHeight);
-    pixelDensity(Math.min(window.devicePixelRatio || 1, 2)); // we could do with some quality settings later
-    View.resize();
-    textAlign(CENTER, CENTER);
-    textFont(Config.FONT_FAMILY);
-    strokeWeight(2.5);
-    fill("#fff0f9");
-    stroke("#2b081d");
-    player = new Player()
 
-    Wrap.setDebug(Config.DEBUG.WRAPPING) 
+player = new Player()
 
-    await load_assets()
 
-    Sound.create_bus("sfx")
-    Sound.create_bus("music")
+const gameLoop = Loop.create({
+    update: (loop) => {
+        Input.update();
+        player.tick(loop);
+    }
+})
 
-    //Sound.play("track1", {loop: true, bus: "music"})
-}
-window.setup = setup;
+Draw.create({
+    init: (loop) => {
+        View.resize(loop);
+    },
+    draw: (loop) => {
+        gameLoop.tick(loop.deltaTime);
 
-function draw() {
-    GameLoop.tick(deltaTime / 1000);
-    View.begin();
-    player.draw(drawingContext, deltaTime);
-    View.end();
-}
-window.draw = draw;
+        View.begin(loop);
+        player.draw(loop.ctx, loop.deltaTime);
+        View.end(loop);
+    },
+    windowResized: (loop) => {
+        loop.canvas.width = window.innerWidth
+        loop.canvas.height = window.innerHeight
+        View.resize(loop);
+    }
+})
 
-function tick(loop) {
-    Input.update();
-    player.tick(loop);
-}
+Wrap.setDebug(Config.DEBUG.WRAPPING) 
 
-function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
-    View.resize();
-}
-window.windowResized = windowResized;
+load_assets()
+
+Sound.create_bus("sfx")
+Sound.create_bus("music")
+
+//Sound.play("track1", {loop: true, bus: "music"})
