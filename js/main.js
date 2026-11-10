@@ -7,6 +7,7 @@ import { UI } from "./modules/ui.js"
 import { Player } from "./player.js"
 import { View } from "./view.js"
 import * as Config from "./config.js"
+import { Wrap } from "./wrap.js"
 
 let player = null
 const GameLoop = Loop.create({
@@ -51,6 +52,8 @@ async function setup() {
     fill("#fff0f9");
     stroke("#2b081d");
     player = new Player()
+
+    Wrap.setDebug(Config.DEBUG.WRAPPING) 
 
     await load_assets()
 

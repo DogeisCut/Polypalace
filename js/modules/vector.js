@@ -1,3 +1,4 @@
+// the goal here was to avoid having an actual vector typed that was passed around since there's shared reference concerns.
 export const Vector2 = (() => {
     const _vProto = Object.create(null)
     _vProto[Symbol.iterator] = function*() {
