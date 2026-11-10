@@ -1,4 +1,4 @@
-const Loop = (() => {
+export const Loop = (() => {
     class Loop {
         constructor({
             fixedStep = 1 / 60,

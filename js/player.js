@@ -1,3 +1,10 @@
+import { Easing } from "./modules/easing.js";
+import { Vector2 } from "./modules/vector.js";
+import { Wrap } from "./wrap.js"
+import { Input } from "./modules/input.js"
+import { Sound } from "./modules/sound.js"
+import * as Config from "./config.js"
+
 const PLAYER_SIZE = 15;
 const PLAYER_TRAIL_LENGTH = 50;
 const PLAYER_TRAIL_DISTANCE_THRESHOLD = 1;
@@ -10,10 +17,10 @@ const PLAYER_BOUNDS_PAD = PLAYER_SIZE * 1.5; // covers ship, trail width, save m
 const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
 const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
 
-class Player {
+export class Player {
     constructor() {
-        this.x = WORLD_WIDTH / 2;
-        this.y = WORLD_HEIGHT / 2;
+        this.x = Config.WORLD_WIDTH / 2;
+        this.y = Config.WORLD_HEIGHT / 2;
         this.speedX = 0;
         this.speedY = 0;
         this.rotation = 0;
@@ -57,7 +64,7 @@ class Player {
             while (diff < -Math.PI) diff += TAU;
             while (diff > Math.PI) diff -= TAU;
             
-            const timeConstant = Easing.settleSecondsToTimeConstant(PLAYER_TURN_SPEED);
+            const timeConstant = Easing.settleSecondsToTimeConstant(Config.PLAYER_TURN_SPEED);
             this.rotation += diff * Easing.dampFactor(loop.deltaTime, timeConstant);
         }
     }
@@ -198,7 +205,7 @@ class Player {
     }
 
     _warp() { // silly function because warp is one letter off from wrap.
-        const pitchScale = random(0.8, 1.2)
+        const pitchScale = Math.random() * 0.4 + 0.8
         Sound.play("warp_use", {
             volume: 0.25,
             pan: this._get_player_sound_panning(),
@@ -215,8 +222,8 @@ class Player {
         this.rotation = Vector2.angle(dx, dy);
         this._add_trail();
         [ this.speedX, this.speedY ] = Vector2.rotate(...Vector2.RIGHT, this.rotation);
-        this.speedX *= PLAYER_WARP_SPEED_BOOST;
-        this.speedY *= PLAYER_WARP_SPEED_BOOST;
+        this.speedX *= Config.PLAYER_WARP_SPEED_BOOST;
+        this.speedY *= Config.PLAYER_WARP_SPEED_BOOST;
 
         this.x += dx;
         this.y += dy;
@@ -234,19 +241,19 @@ class Player {
     }
 
     _get_player_sound_panning() {
-        return Easing.lerp(-1, 1, this.x/WORLD_WIDTH) / 2.0
+        return Easing.lerp(-1, 1, this.x/Config.WORLD_WIDTH) / 2.0
     }
 
     tick(loop) {
         const moveX = Input.is_action_down("right") - Input.is_action_down("left");
         const moveY = Input.is_action_down("down") - Input.is_action_down("up");
         const length = Vector2.magnitude(moveX, moveY);
-        const targetX = (moveX / length) * PLAYER_MOVE_SPEED;
-        const targetY = (moveY / length) * PLAYER_MOVE_SPEED;
+        const targetX = (moveX / length) * Config.PLAYER_MOVE_SPEED;
+        const targetY = (moveY / length) * Config.PLAYER_MOVE_SPEED;
         if (Math.abs(moveX) < Number.EPSILON && Math.abs(moveY) < Number.EPSILON) {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, ...Vector2.ZERO, 1 - Math.pow(PLAYER_DECEL, loop.deltaTime))
+            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, ...Vector2.ZERO, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
         } else {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(PLAYER_ACCEL, loop.deltaTime))
+            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(Config.PLAYER_ACCEL, loop.deltaTime))
         }
         this._move(loop);
 
@@ -258,7 +265,7 @@ class Player {
                     volume: 0.5,
                     pan: this._get_player_sound_panning(),
                     bus: "sfx",
-                    pitchScale = random(0.8, 1.2),
+                    pitchScale: Math.random() * 0.4 + 0.8,
                 });
             } else {
                 this._warp();

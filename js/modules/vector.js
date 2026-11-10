@@ -1,4 +1,4 @@
-const Vector2 = (() => {
+export const Vector2 = (() => {
     const _vProto = Object.create(null)
     _vProto[Symbol.iterator] = function*() {
         yield this.x;

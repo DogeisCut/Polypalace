@@ -1,4 +1,4 @@
-const UI = (() => {
+export const UI = (() => {
 
     return {
 

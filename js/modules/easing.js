@@ -1,4 +1,4 @@
-const Easing = (() => {
+export const Easing = (() => {
     const TAU = Math.PI * 2;
 
     const QUARTER_CYCLE = 0.25;

@@ -1,3 +1,13 @@
+import { Assets } from "./modules/assets.js"
+import { Easing } from "./modules/easing.js"
+import { Input } from "./modules/input.js"
+import { Loop } from "./modules/loop.js"
+import { Sound } from "./modules/sound.js"
+import { UI } from "./modules/ui.js"
+import { Player } from "./player.js"
+import { View } from "./view.js"
+import * as Config from "./config.js"
+
 let player = null
 const GameLoop = Loop.create({
     update: (loop) => tick(loop)
@@ -36,7 +46,7 @@ async function setup() {
     pixelDensity(Math.min(window.devicePixelRatio || 1, 2)); // we could do with some quality settings later
     View.resize();
     textAlign(CENTER, CENTER);
-    textFont(FONT_FAMILY);
+    textFont(Config.FONT_FAMILY);
     strokeWeight(2.5);
     fill("#fff0f9");
     stroke("#2b081d");
@@ -49,6 +59,7 @@ async function setup() {
 
     Sound.play("track1", {loop: true, bus: "music"})
 }
+window.setup = setup;
 
 function draw() {
     GameLoop.tick(deltaTime / 1000);
@@ -56,6 +67,7 @@ function draw() {
     player.draw(deltaTime);
     View.end();
 }
+window.draw = draw;
 
 function tick(loop) {
     Input.update();
@@ -66,3 +78,4 @@ function windowResized() {
     resizeCanvas(windowWidth, windowHeight);
     View.resize();
 }
+window.windowResized = windowResized;

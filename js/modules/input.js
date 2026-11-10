@@ -1,4 +1,4 @@
-const Input = (() => {
+export const Input = (() => {
     const actions = new Map()
     const action_states = new Map()
     const last_action_states = new Map()
