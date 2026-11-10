@@ -216,6 +216,8 @@ class Player {
         this.savedY = null;
         this._add_trail();
         this._wrap();
+
+        Sound.play("warp_use");
     }
 
     tick(loop) {
@@ -235,6 +237,7 @@ class Player {
             if (this.savedX == null || this.savedY == null) {
                 this.savedX = this.x
                 this.savedY = this.y
+                Sound.play("warp_place");
             } else {
                 this._warp();
             }

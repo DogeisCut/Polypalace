@@ -23,7 +23,13 @@ Input.add_action("warp")
 Input.add_event("warp", Input.Key.SPACE)
 Input.add_event("warp", Input.Mouse.LEFT)
 
-function setup() {
+async function load_assets() {
+    await Sound.load("warp_place", "assets/sounds/sfx/warp_place.wav")
+    await Sound.load("warp_use", "assets/sounds/sfx/warp_use.wav")
+    await Sound.load("wrap", "assets/sounds/sfx/wrap.wav")
+}
+
+async function setup() {
     createCanvas(windowWidth, windowHeight);
     pixelDensity(Math.min(window.devicePixelRatio || 1, 2)); // we could do with some quality settings later
     View.resize();
@@ -33,6 +39,7 @@ function setup() {
     fill("#fff0f9");
     stroke("#2b081d");
     player = new Player()
+    await load_assets()
 }
 
 function draw() {
