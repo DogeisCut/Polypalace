@@ -1,3 +1,45 @@
+/**
+ * @typedef {(t: number) => number} EasingCurve
+ */
+
+/**
+ * @typedef {"linear" | "smoothstep" | "smootherstep" | "hump"} BasicCurveName
+ */
+
+/**
+ * @typedef {"quad" | "cubic" | "quart" | "quint" | "sine" | "expo" | "circ" | "back" | "elastic" | "bounce"} CurveFamily
+ */
+
+/**
+ * @typedef {BasicCurveName | `in${Capitalize<CurveFamily>}` | `out${Capitalize<CurveFamily>}` | `inOut${Capitalize<CurveFamily>}`} CurveName
+ */
+
+/**
+ * @typedef {CurveName | EasingCurve} CurveOrName
+ */
+
+/**
+ * @typedef {{ easeIn: EasingCurve } | { easeOut: EasingCurve }} CurveShapes
+ */
+
+/**
+ * @typedef {Object} EnvelopeOptions
+ * @property {number} riseFrom
+ * @property {number} riseTo
+ * @property {number} fallFrom
+ * @property {number} fallTo
+ * @property {CurveOrName} [riseCurve]
+ * @property {CurveOrName} [fallCurve]
+ */
+
+/**
+ * @typedef {Object} BounceArc
+ * @property {number} endTime
+ * @property {number} centerTime
+ * @property {number} halfDuration
+ * @property {number} depth
+ */
+
 export const Easing = (() => {
     const TAU = Math.PI * 2;
 
@@ -10,17 +52,37 @@ export const Easing = (() => {
     const SETTLED_REMAINING_FRACTION = 0.01;
     const TIME_CONSTANTS_TO_SETTLE = -Math.log(SETTLED_REMAINING_FRACTION);
 
+    /**
+     * @param {number} value
+     * @param {number} [min]
+     * @param {number} [max]
+     */
     const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 
+    /** @param {number} value */
     const clamp01 = (value) => clamp(value, 0, 1);
 
+    /**
+     * @param {number} from
+     * @param {number} to
+     * @param {number} t
+     */
     const lerp = (from, to, t) => from + (to - from) * t;
 
+    /**
+     * @param {number} value
+     * @param {number} start
+     * @param {number} end
+     */
     function progress(value, start, end) {
         if (start === end) return value < start ? 0 : 1;
         return clamp01((value - start) / (end - start));
     }
 
+    /**
+     * @param {number} value
+     * @param {number} [period]
+     */
     function wrap(value, period = 1) {
         const remainder = value % period;
         const wrapped = remainder < 0 ? remainder + period : remainder;
@@ -28,14 +90,26 @@ export const Easing = (() => {
         return roundedUpToPeriod ? 0 : wrapped;
     }
 
+    /** @param {number} value */
     const fract = (value) => wrap(value, 1);
 
+    /** @param {number} unit */
     const toBipolar = (unit) => unit * 2 - 1;
 
+    /** @param {number} bipolar */
     const toUnit = (bipolar) => (bipolar + 1) / 2;
 
+    /**
+     * @param {number} seconds
+     * @param {number} [hertz]
+     * @param {number} [offsetCycles]
+     */
     const phaseFromTime = (seconds, hertz = 1, offsetCycles = 0) => seconds * hertz + offsetCycles;
 
+    /**
+     * @param {CurveOrName | null} [curveOrName]
+     * @returns {EasingCurve}
+     */
     function resolveCurve(curveOrName) {
         const curve = curveOrName ?? "linear";
         if (typeof curve === "function") return curve;
@@ -44,26 +118,46 @@ export const Easing = (() => {
         return named;
     }
 
+    /**
+     * @param {CurveOrName} curveOrName
+     * @returns {EasingCurve}
+     */
     function mirror(curveOrName) {
         const curve = resolveCurve(curveOrName);
         return (t) => 1 - curve(1 - t);
     }
 
+    /**
+     * @param {CurveOrName} curveOrName
+     * @returns {EasingCurve}
+     */
     function mirrorInOut(curveOrName) {
         const curve = resolveCurve(curveOrName);
         return (t) => (t < HALF_CYCLE ? curve(2 * t) / 2 : 1 - curve(2 - 2 * t) / 2);
     }
 
+    /**
+     * @param {CurveOrName} curveOrName
+     * @returns {EasingCurve}
+     */
     function reverseInput(curveOrName) {
         const curve = resolveCurve(curveOrName);
         return (t) => curve(1 - t);
     }
 
+    /**
+     * @param {number} [overshoot]
+     * @returns {EasingCurve}
+     */
     const backIn =
         (overshoot = CLASSIC_BACK_OVERSHOOT) =>
         (t) =>
             t * t * ((overshoot + 1) * t - overshoot);
 
+    /**
+     * @param {number} [period]
+     * @returns {EasingCurve}
+     */
     const elasticIn =
         (period = CLASSIC_ELASTIC_PERIOD) =>
         (t) => {
@@ -74,8 +168,14 @@ export const Easing = (() => {
             return -decay * wobble;
         };
 
+    /**
+     * @param {number} [rebounds]
+     * @returns {EasingCurve}
+     */
     function makeBounceOut(rebounds = 3) {
+        /** @type {BounceArc} */
         const initialFall = { endTime: 1, centerTime: 0, halfDuration: 1, depth: 1 };
+        /** @type {BounceArc[]} */
         const arcs = [initialFall];
         let elapsed = initialFall.endTime;
 
@@ -101,8 +201,13 @@ export const Easing = (() => {
         };
     }
 
+    /**
+     * @param {number} exponent
+     * @returns {EasingCurve}
+     */
     const powerCurve = (exponent) => (t) => t ** exponent;
 
+    /** @type {Record<CurveFamily, CurveShapes>} */
     const CURVE_FAMILIES = {
         quad: { easeIn: powerCurve(2) },
         cubic: { easeIn: powerCurve(3) },
@@ -116,6 +221,7 @@ export const Easing = (() => {
         bounce: { easeOut: makeBounceOut() },
     };
 
+    /** @type {Record<string, EasingCurve>} */
     const builtCurves = {
         linear: (t) => t,
         smoothstep: (t) => t * t * (3 - 2 * t),
@@ -132,21 +238,47 @@ export const Easing = (() => {
         builtCurves[`inOut${suffix}`] = mirrorInOut(easeIn);
     }
 
-    const curves = (
+    const curves = /** @type {Readonly<Record<CurveName, EasingCurve>>} */ (
         Object.freeze(builtCurves)
     );
 
+    /**
+     * @param {CurveOrName} curveOrName
+     * @param {number} t
+     */
     const ease = (curveOrName, t) => resolveCurve(curveOrName)(clamp01(t));
 
+    /**
+     * @param {number} from
+     * @param {number} to
+     * @param {number} t
+     * @param {CurveOrName} [curveOrName]
+     */
     const tween = (from, to, t, curveOrName = "linear") => lerp(from, to, ease(curveOrName, t));
 
+    /**
+     * @param {number} value
+     * @param {number} start
+     * @param {number} end
+     * @param {CurveOrName} [curveOrName]
+     */
     const fadeIn = (value, start, end, curveOrName = "smoothstep") =>
         ease(curveOrName, progress(value, start, end));
 
+    /**
+     * @param {number} value
+     * @param {number} start
+     * @param {number} end
+     * @param {CurveOrName} [curveOrName]
+     */
     const fadeOut = (value, start, end, curveOrName = "smoothstep") =>
         1 - fadeIn(value, start, end, curveOrName);
 
 
+    /**
+     * @param {number} value
+     * @param {EnvelopeOptions} options
+     */
     function envelope(
         value,
         { riseFrom, riseTo, fallFrom, fallTo, riseCurve = "smoothstep", fallCurve = "smoothstep" },
@@ -156,6 +288,10 @@ export const Easing = (() => {
         return fadeOut(value, fallFrom, fallTo, fallCurve);
     }
 
+    /**
+     * @param {number} t
+     * @param {CurveOrName} [curveOrName]
+     */
     function yoyo(t, curveOrName = "linear") {
         const clamped = clamp01(t);
         const outAndBack = clamped < HALF_CYCLE ? 2 * clamped : 2 - 2 * clamped;
@@ -163,18 +299,39 @@ export const Easing = (() => {
     }
 
     const wave = {
+        /** @param {number} phase */
         sine: (phase) => Math.sin(TAU * phase),
+        /** @param {number} phase */
         cosine: (phase) => Math.cos(TAU * phase),
+        /** @param {number} phase */
         triangle: (phase) => {
             const shifted = fract(phase + QUARTER_CYCLE);
             const distanceFromMidpoint = Math.abs(shifted - HALF_CYCLE);
             return 1 - distanceFromMidpoint / QUARTER_CYCLE;
         },
+        /** @param {number} phase */
         saw: (phase) => toBipolar(fract(phase)),
+        /**
+         * @param {number} phase
+         * @param {number} [dutyCycle]
+         */
         pulse: (phase, dutyCycle = HALF_CYCLE) => (fract(phase) < dutyCycle ? 1 : -1),
+        /** @param {number} phase */
         square: (phase) => wave.pulse(phase, HALF_CYCLE),
+        /**
+         * @param {number} phase
+         * @param {number} [steepness]
+         */
         trapezoid: (phase, steepness = 2) => clamp(steepness * wave.triangle(phase), -1, 1),
+        /**
+         * @param {number} phase
+         * @param {number} [sharpness]
+         */
         softSquare: (phase, sharpness = 5) => Math.tanh(sharpness * wave.sine(phase)),
+        /**
+         * @param {number} phase
+         * @param {number} [steps]
+         */
         staircase: (phase, steps = 4) => {
             const stepCount = Math.max(2, Math.floor(steps));
             const stepIndex = Math.floor(fract(phase) * stepCount);
@@ -183,30 +340,64 @@ export const Easing = (() => {
     };
 
     const cycle = {
+        /** @param {number} phase */
         ramp: (phase) => fract(phase),
+        /** @param {number} phase */
         pingPong: (phase) => 1 - Math.abs(toBipolar(fract(phase))),
+        /** @param {number} phase */
         raisedCosine: (phase) => (1 - Math.cos(TAU * phase)) / 2,
+        /**
+         * @param {number} phase
+         * @param {CurveOrName} [curveOrName]
+         */
         eased: (phase, curveOrName = "smoothstep") => resolveCurve(curveOrName)(cycle.pingPong(phase)),
+        /**
+         * @param {number} phase
+         * @param {number} [dutyCycle]
+         */
         gate: (phase, dutyCycle = HALF_CYCLE) => (fract(phase) < dutyCycle ? 1 : 0),
+        /** @param {number} phase */
         rectifiedSine: (phase) => Math.abs(wave.sine(phase)),
+        /** @param {number} phase */
         halfSine: (phase) => Math.max(wave.sine(phase), 0),
     };
 
+    /** @param {number} settleSeconds */
     const settleSecondsToTimeConstant = (settleSeconds) =>
         settleSeconds > 0 ? settleSeconds / TIME_CONSTANTS_TO_SETTLE : 0;
 
+    /**
+     * @param {number} deltaSeconds
+     * @param {number} timeConstant
+     */
     const dampFactor = (deltaSeconds, timeConstant) =>
         timeConstant > 0 ? 1 - Math.exp(-deltaSeconds / timeConstant) : 1;
 
+    /**
+     * @param {number} current
+     * @param {number} target
+     * @param {number} timeConstant
+     * @param {number} deltaSeconds
+     */
     const damp = (current, target, timeConstant, deltaSeconds) =>
         lerp(current, target, dampFactor(deltaSeconds, timeConstant));
 
+    /**
+     * @param {number} current
+     * @param {number} target
+     * @param {number} maxStep
+     */
     function moveToward(current, target, maxStep) {
         const remaining = target - current;
         return Math.abs(remaining) <= maxStep ? target : current + Math.sign(remaining) * maxStep;
     }
 
     class Smoother {
+        /**
+         * @param {number} [initialValue]
+         * @param {Object} [options]
+         * @param {number} [options.snapDistance]
+         */
         constructor(initialValue = 0, { snapDistance = 1e-4 } = {}) {
             this.value = initialValue;
             this.target = initialValue;
@@ -214,6 +405,10 @@ export const Easing = (() => {
             this.snapDistance = snapDistance;
         }
 
+        /**
+         * @param {number} target
+         * @param {number} [settleSeconds]
+         */
         setTarget(target, settleSeconds = 0) {
             this.target = target;
             this.timeConstant = settleSecondsToTimeConstant(settleSeconds);
@@ -221,6 +416,9 @@ export const Easing = (() => {
             return this;
         }
 
+        /**
+         * @param {number} deltaSeconds
+         */
         update(deltaSeconds) {
             if (this.settled) return this.value;
             this.value = damp(this.value, this.target, this.timeConstant, deltaSeconds);

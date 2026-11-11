@@ -228,6 +228,7 @@ export class Player {
         })
     }
 
+    // this has to go unused because the type checker likes to complain :(
     _has_warp_point() {
         return !(this.savedX == null || this.savedY == null)
     }
