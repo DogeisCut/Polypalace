@@ -291,6 +291,8 @@ export class Player {
             // balls
             ctx.fillStyle = TRAIL_PALETTE[Math.floor((loop.timestamp / 10) % TRAIL_PALETTE_LENGTH)];
 
+            // BUG: shaking is framerate dependent and loops disagree about a single circle's position.
+
             ctx.beginPath();
             ctx.arc(0 + (Math.random() * 2 - 1)*3, -4 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
             ctx.fill();
@@ -302,6 +304,8 @@ export class Player {
             ctx.beginPath();
             ctx.arc(4 + (Math.random() * 2 - 1)*3, 2 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
             ctx.fill();
+
+            // TODO: reduce the mess here
             
             // spikes
             ctx.rotate(loop.timestamp / -100)
