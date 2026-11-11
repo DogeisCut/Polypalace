@@ -1,5 +1,3 @@
-import { MathEx } from "./mathExpansion";
-
 /**
  * @typedef {InstanceType<typeof Draw.Class>} DrawLooper
  */
@@ -72,7 +70,7 @@ export const Draw = (() => {
      * @param {number} radius
      */
     function circle(ctx, x, y, radius) {
-        ctx.arc(x, y, radius, 0, MathEx.TAU)
+        ctx.arc(x, y, radius, 0, Math.PI * 2)
     }
 
     /**
