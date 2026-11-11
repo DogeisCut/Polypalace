@@ -25,6 +25,7 @@ const PLAYER_TRAIL_HALF_WIDTH = PLAYER_SIZE / 1.2;
 const PLAYER_BOUNDS_PAD = PLAYER_SIZE * 1.5; // covers ship, trail width, save marker, stroke
 
 const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED = Config.PLAYER_AOE_ACTIVATION_DISTANCE * Config.PLAYER_AOE_ACTIVATION_DISTANCE
+const PLAYER_AOE_RANGE_SQUARED = Config.PLAYER_AOE_RANGE * Config.PLAYER_AOE_RANGE
 
 // pre calculate the ship rendering :P
 const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
@@ -371,7 +372,7 @@ export class Player {
         this._add_trail();
         this._wrap();
 
-        this.iframesTimestamp = loop.time + Config.PLAYER_DASH_I_FRAMES_SECONDS;
+        this.iframesTimestamp = loop.time + Config.PLAYER_WARP_I_FRAMES_SECONDS;
 
         Sound.play("warp_use", {
             volume: 0.25,
@@ -391,15 +392,35 @@ export class Player {
      * @param {number} y
      */
     _aoe_attack(loop, x, y) {
+        if (this._has_warp_point()) {
+            const { savedX, savedY } = this;
+
+            this.aoeCooldownTimestamp = loop.time + Config.PLAYER_AOE_COOLDOWN_SECONDS;
+
+            const playerLaunchForce = Easing.lerp(Config.PLAYER_AOE_MAX_SPEED_BOOST, 0, Wrap.distanceSquared(this.x, this.y, savedX, savedY) / PLAYER_AOE_RANGE_SQUARED)
+
+            if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > 1) {
+                const dx = Wrap.deltaX(this.x, savedX);
+                const dy = Wrap.deltaY(this.y, savedY);
+
+                this.rotation = Vector2.angle(-dx, -dy);
+            }
+            
+            [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
+            this.speedX *= playerLaunchForce;
+            this.speedY *= playerLaunchForce;
+
+            Sound.play("aoe_attack", {
+                volume: 0.5,
+                pan: this._get_player_sound_panning(),
+                bus: "sfx",
+                pitchScale: Math.random() * 0.4 + 0.8,
+            });
+        };
+        
+
         this.savedX = null
         this.savedY = null
-        this.aoeCooldownTimestamp = loop.time + Config.PLAYER_AOE_COOLDOWN_SECONDS;
-        Sound.play("aoe_attack", {
-            volume: 0.5,
-            pan: this._get_player_sound_panning(),
-            bus: "sfx",
-            pitchScale: Math.random() * 0.4 + 0.8,
-        });
     }
 
     /**
