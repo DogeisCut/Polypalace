@@ -1,0 +1,30 @@
+{
+    "name": "polypalace",
+    "version": "0.1.0",
+    "private": true,
+    "description": "game",
+    "license": "SEE LICENSE IN LICENSE",
+    "main": "index.js",
+    "scripts": {
+        "start": "serve -p 5493",
+        "typecheck": "tsc -p jsconfig.json",
+        "format": "prettier --write .",
+        "format:check": "prettier --check .",
+        "check": "npm run typecheck && npm run format:check"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/DogeisCut/Polypalace.git"
+    },
+    "keywords": [],
+    "author": "DogeisCut",
+    "bugs": {
+        "url": "https://github.com/DogeisCut/Polypalace/issues"
+    },
+    "homepage": "https://github.com/DogeisCut/Polypalace#readme",
+    "devDependencies": {
+        "prettier": "^3.10.0",
+        "serve": "^14.2.7",
+        "typescript": "^7.0.2"
+    }
+}
