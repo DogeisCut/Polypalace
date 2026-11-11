@@ -29,6 +29,7 @@ const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED = Config.PLAYER_AOE_ACTIVATION_DIST
 // pre calculate the ship rendering :P
 const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
 const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
+const TRAIL_PALETTE_LENGTH  = TRAIL_PALETTE.length;
 
 export class Player {
     constructor() {
@@ -117,7 +118,7 @@ export class Player {
             const b = trail[i + 1];
             const sizeB = Easing.ease("linear", (i + 1) / PLAYER_TRAIL_LENGTH) * PLAYER_TRAIL_HALF_WIDTH;
 
-            const color = TRAIL_PALETTE[(i * 7 + hueBase) % 360];
+            const color = TRAIL_PALETTE[(i * 7 + hueBase) % TRAIL_PALETTE_LENGTH];
             ctx.fillStyle = color;
             ctx.strokeStyle = color;
             ctx.beginPath();
@@ -183,7 +184,7 @@ export class Player {
     draw(loop) {
         const ctx = loop.ctx
         const dt = loop.deltaTime
-        this.trailColor = (this.trailColor + dt * 600) % 360;
+        this.trailColor = (this.trailColor + dt * 600) % TRAIL_PALETTE_LENGTH;
 
         this._draw_warp_line(loop);
         const b = this._compute_bounds();
@@ -194,7 +195,7 @@ export class Player {
             this._draw_ship(ctx);
             ctx.restore();
         });
-        this._draw_warp_point(ctx);
+        this._draw_warp_point(loop);
     }
 
     _add_trail() {
@@ -273,26 +274,34 @@ export class Player {
     }
 
     /**
-     * @param ctx {CanvasRenderingContext2D}
+     * @param loop {DrawLooper}
      */
-    _draw_warp_point(ctx) {
+    _draw_warp_point(loop) {
         if (!this._has_warp_point()) return;
         const { savedX, savedY } = this;
+        const ctx = loop.ctx;
 
         const r = PLAYER_SIZE * 1.1 + 2;
         Wrap.forEachCopy(savedX - r, savedY - r, savedX + r, savedY + r, (ox, oy) => {
             ctx.save();
+
+            // base
             ctx.lineWidth = 2.5;
-            ctx.strokeStyle = "#fff0f9"
+            ctx.fillStyle = "#fff0f9"
             ctx.strokeStyle = "#2b081d"
             ctx.translate(savedX + ox, savedY + oy);
             ctx.beginPath();
-            ctx.arc(0, 0, PLAYER_SIZE / 1.1, 0, Math.PI * 2);
-            ctx.moveTo(0, PLAYER_SIZE * 1.1);
-            ctx.lineTo(0, -PLAYER_SIZE * 1.1);
-            ctx.moveTo(PLAYER_SIZE * 1.1, 0);
-            ctx.lineTo(-PLAYER_SIZE * 1.1, 0);
+            ctx.arc(0, 0, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.stroke();
+
+            // center
+            ctx.beginPath();
+            ctx.fillStyle = TRAIL_PALETTE[Math.floor((loop.timestamp / 10) % TRAIL_PALETTE_LENGTH)];
+            ctx.arc(0, 0, PLAYER_SIZE / 2.5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.stroke();
+
             ctx.restore();
         });
     }
