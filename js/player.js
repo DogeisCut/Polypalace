@@ -4,9 +4,10 @@ import { Wrap } from "./wrap.js";
 import { Input } from "./modules/input.js";
 import { Sound } from "./modules/sound.js";
 import * as Config from "./config.js";
+import { Entity } from "./entity.js";
 
 /** @typedef {import("./modules/loop.js").Looper} Looper */
-/** @typedef {import("./view.js").DrawLooper} DrawLooper */
+/** @typedef {import("./modules/draw.js").DrawLooper} DrawLooper */
 
 /**
  * @typedef {Object} TrailPoint
@@ -55,8 +56,9 @@ const TRAIL_PALETTE = Array.from(
 const TRAIL_PALETTE_LENGTH = TRAIL_PALETTE.length;
 
 // TODO: some sort of base entity class that shares a position and tick and draw function(?)
-export class Player {
+export class Player extends Entity {
     constructor() {
+        super();
         this.x = Config.WORLD_WIDTH / 2;
         this.y = Config.WORLD_HEIGHT / 2;
 
@@ -209,26 +211,6 @@ export class Player {
         b.maxX += PLAYER_BOUNDS_PAD;
         b.maxY += PLAYER_BOUNDS_PAD;
         return b;
-    }
-
-    /**
-     * @param {DrawLooper} loop
-     */
-    draw(loop) {
-        const ctx = loop.ctx;
-        const dt = loop.deltaTime;
-        this.trailColor = (this.trailColor + dt * 600) % TRAIL_PALETTE_LENGTH;
-
-        this._drawWarpLine(loop);
-        const b = this._computeBounds();
-        Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
-            ctx.save();
-            ctx.translate(ox, oy);
-            this._drawTrail(ctx);
-            this._drawShip(ctx);
-            ctx.restore();
-        });
-        this._drawWarpPoint(loop);
     }
 
     _addTrail() {
@@ -640,9 +622,31 @@ export class Player {
     }
 
     /**
+     * @override
+     * @param {DrawLooper} loop
+     */
+    draw(loop) {
+        const ctx = loop.ctx;
+        const dt = loop.deltaTime;
+        this.trailColor = (this.trailColor + dt * 600) % TRAIL_PALETTE_LENGTH;
+
+        this._drawWarpLine(loop);
+        const b = this._computeBounds();
+        Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
+            ctx.save();
+            ctx.translate(ox, oy);
+            this._drawTrail(ctx);
+            this._drawShip(ctx);
+            ctx.restore();
+        });
+        this._drawWarpPoint(loop);
+    }
+
+    /**
+     * @override
      * @param {Looper} loop
      */
-    tick(loop) {
+    update(loop) {
         const moveX =
             Number(Input.isActionDown("right")) -
             Number(Input.isActionDown("left"));

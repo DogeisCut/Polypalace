@@ -45,7 +45,7 @@ const player = new Player();
 const gameLoop = Loop.create({
     update: (loop) => {
         Input.update();
-        player.tick(loop);
+        player.update(loop);
     },
 });
 
