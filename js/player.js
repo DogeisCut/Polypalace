@@ -81,7 +81,7 @@ export class Player {
         this._bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     }
 
-    _back_point() {
+    _backPoint() {
         return Vector2.rotate(PLAYER_BACK_OFFSET, 0, this.rotation);
     }
 
@@ -134,7 +134,7 @@ export class Player {
     /**
      * @param ctx {CanvasRenderingContext2D}
      */
-    _draw_trail(ctx) {
+    _drawTrail(ctx) {
         const trail = this.trail;
         if (trail.length < 2) return;
 
@@ -172,7 +172,7 @@ export class Player {
     /**
      * @param ctx {CanvasRenderingContext2D}
      */
-    _draw_ship(ctx) {
+    _drawShip(ctx) {
         // triangle
         ctx.lineWidth = 2.5;
         ctx.fillStyle = "#fff0f9";
@@ -194,7 +194,7 @@ export class Player {
         ctx.fill();
     }
 
-    _compute_bounds() {
+    _computeBounds() {
         const b = this._bounds;
         b.minX = b.maxX = this.x;
         b.minY = b.maxY = this.y;
@@ -219,20 +219,20 @@ export class Player {
         const dt = loop.deltaTime;
         this.trailColor = (this.trailColor + dt * 600) % TRAIL_PALETTE_LENGTH;
 
-        this._draw_warp_line(loop);
-        const b = this._compute_bounds();
+        this._drawWarpLine(loop);
+        const b = this._computeBounds();
         Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
             ctx.save();
             ctx.translate(ox, oy);
-            this._draw_trail(ctx);
-            this._draw_ship(ctx);
+            this._drawTrail(ctx);
+            this._drawShip(ctx);
             ctx.restore();
         });
-        this._draw_warp_point(loop);
+        this._drawWarpPoint(loop);
     }
 
-    _add_trail() {
-        const [backX, backY] = this._back_point();
+    _addTrail() {
+        const [backX, backY] = this._backPoint();
 
         this.trail.push({
             x: this.x + backX,
@@ -249,8 +249,8 @@ export class Player {
     /**
      * @param loop {DrawLooper}
      */
-    _draw_warp_line(loop) {
-        if (!this._has_warp_point()) return;
+    _drawWarpLine(loop) {
+        if (!this._hasWarpPoint()) return;
         const ctx = loop.ctx;
         const { savedX, savedY } = this;
 
@@ -361,15 +361,15 @@ export class Player {
     /**
      * @returns {this is this & { savedX: number, savedY: number }}
      */
-    _has_warp_point() {
+    _hasWarpPoint() {
         return !(this.savedX == null || this.savedY == null);
     }
 
     /**
      * @param loop {DrawLooper}
      */
-    _draw_warp_point(loop) {
-        if (!this._has_warp_point()) return;
+    _drawWarpPoint(loop) {
+        if (!this._hasWarpPoint()) return;
         const { savedX, savedY } = this;
         const ctx = loop.ctx;
 
@@ -515,7 +515,7 @@ export class Player {
             this.rotation = Vector2.angle(dx, dy);
         }
 
-        this._add_trail();
+        this._addTrail();
 
         [this.speedX, this.speedY] = Vector2.rotate(
             Vector2.RIGHT.x,
@@ -529,7 +529,7 @@ export class Player {
         this.y += dy;
         this.savedX = null;
         this.savedY = null;
-        this._add_trail();
+        this._addTrail();
         this._wrap();
 
         this.iframesTimestamp = loop.time + Config.PLAYER_WARP_I_FRAMES_SECONDS;
@@ -552,7 +552,7 @@ export class Player {
      * @param {number} y
      */
     _aoeAttack(loop, x, y) {
-        if (this._has_warp_point()) {
+        if (this._hasWarpPoint()) {
             const { savedX, savedY } = this;
 
             this.aoeCooldownTimestamp =
@@ -675,10 +675,10 @@ export class Player {
         this._move(loop);
 
         if (
-            Input.was_action_just_pressed("warp") &&
+            Input.wasActionJustPressed("warp") &&
             this._off_aoe_cooldown(loop)
         ) {
-            if (this._has_warp_point()) {
+            if (this._hasWarpPoint()) {
                 if (
                     Wrap.distanceSquared(
                         this.x,
@@ -697,6 +697,6 @@ export class Player {
             }
         }
 
-        this._add_trail();
+        this._addTrail();
     }
 }

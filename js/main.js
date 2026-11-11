@@ -7,25 +7,25 @@ import { View } from "./view.js";
 import * as Config from "./config.js";
 import { Wrap } from "./wrap.js";
 
-Input.add_action("up");
-Input.add_event("up", Input.Key.UP);
-Input.add_event("up", Input.Key.KEY_W);
+Input.addAction("up");
+Input.addEvent("up", Input.Key.UP);
+Input.addEvent("up", Input.Key.KEY_W);
 
-Input.add_action("down");
-Input.add_event("down", Input.Key.DOWN);
-Input.add_event("down", Input.Key.KEY_S);
+Input.addAction("down");
+Input.addEvent("down", Input.Key.DOWN);
+Input.addEvent("down", Input.Key.KEY_S);
 
-Input.add_action("left");
-Input.add_event("left", Input.Key.LEFT);
-Input.add_event("left", Input.Key.KEY_A);
+Input.addAction("left");
+Input.addEvent("left", Input.Key.LEFT);
+Input.addEvent("left", Input.Key.KEY_A);
 
-Input.add_action("right");
-Input.add_event("right", Input.Key.RIGHT);
-Input.add_event("right", Input.Key.KEY_D);
+Input.addAction("right");
+Input.addEvent("right", Input.Key.RIGHT);
+Input.addEvent("right", Input.Key.KEY_D);
 
-Input.add_action("warp");
-Input.add_event("warp", Input.Key.SPACE);
-Input.add_event("warp", Input.Mouse.LEFT);
+Input.addAction("warp");
+Input.addEvent("warp", Input.Key.SPACE);
+Input.addEvent("warp", Input.Mouse.LEFT);
 
 async function load_assets() {
     // Music
@@ -44,6 +44,7 @@ const player = new Player();
 
 const gameLoop = Loop.create({
     update: (loop) => {
+        Input.update();
         player.tick(loop);
     },
 });
@@ -53,7 +54,6 @@ Draw.create({
         View.resize(loop);
     },
     draw: (loop) => {
-        Input.update();
         gameLoop.tick(loop.deltaTime);
 
         loop.ctx.lineCap = "round";
@@ -74,7 +74,7 @@ Wrap.setDebug(Config.DEBUG.WRAPPING);
 
 load_assets();
 
-Sound.create_bus("sfx");
-Sound.create_bus("music");
+Sound.createBus("sfx");
+Sound.createBus("music");
 
 //Sound.play("track1", {loop: true, bus: "music"})

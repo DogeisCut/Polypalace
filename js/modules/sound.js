@@ -15,7 +15,7 @@ export const Sound = (() => {
     /**
      * @returns {AudioContext}
      */
-    function _require_ctx() {
+    function _requireCtx() {
         if (!ctx) {
             throw new Error(
                 `[sound]: audio context doesn't exist yet, call Sound.unlock() first`,
@@ -34,7 +34,7 @@ export const Sound = (() => {
                 window.AudioContext ||
                 /** @type {any} */ (window).webkitAudioContext;
             ctx = new AudioContextClass();
-            create_bus("master", ctx.destination);
+            createBus("master", ctx.destination);
         }
         if (ctx.state === "suspended") {
             ctx.resume();
@@ -66,16 +66,16 @@ export const Sound = (() => {
      * @param {string} name
      * @param {SoundBus} [destination]
      */
-    function create_bus(name, destination = "master") {
+    function createBus(name, destination = "master") {
         if (busses.has(name)) {
             throw new Error(`[sound]: bus ${name} already exists`);
         }
 
         if (typeof destination === "string") {
-            destination = get_bus(destination);
+            destination = getBus(destination);
         }
 
-        const gainNode = _require_ctx().createGain();
+        const gainNode = _requireCtx().createGain();
         gainNode.connect(destination);
         busses.set(name, gainNode);
     }
@@ -84,7 +84,7 @@ export const Sound = (() => {
      * @param {string} name
      * @returns {GainNode}
      */
-    function get_bus(name) {
+    function getBus(name) {
         const bus = busses.get(name);
         if (!bus) {
             throw new Error(`[sound]: no such bus ${name} exists`);
@@ -96,15 +96,15 @@ export const Sound = (() => {
      * @param {string} name
      * @param {number} volume
      */
-    function set_bus_volume(name, volume) {
-        get_bus(name).gain.value = volume;
+    function setBusVolume(name, volume) {
+        getBus(name).gain.value = volume;
     }
 
     /**
      * @param {string} from
      * @param {string} to
      */
-    function connect_bus(from, to) {
+    function connectBus(from, to) {
         if (!busses.has(from)) {
             throw new Error(`[sound]: no such source bus ${from} exists`);
         }
@@ -137,7 +137,7 @@ export const Sound = (() => {
         if (!ctx || !buffer) return;
 
         if (typeof bus === "string") {
-            bus = get_bus(bus);
+            bus = getBus(bus);
         }
 
         const source = ctx.createBufferSource();
@@ -159,5 +159,5 @@ export const Sound = (() => {
         source.start(0);
     }
 
-    return { load, play, unlock, create_bus, get_bus, set_bus_volume };
+    return { load, play, unlock, createBus, getBus, setBusVolume };
 })();

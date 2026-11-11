@@ -153,7 +153,7 @@ export const Input = (() => {
      * @param {ActionName} name
      * @returns {ActionArray}
      */
-    function _get_action(name) {
+    function _getAction(name) {
         const events = actions.get(name);
         if (!events) {
             throw new Error(`[input]: no such action ${name} found`);
@@ -164,7 +164,7 @@ export const Input = (() => {
     /**
      * @param {ActionName} name
      */
-    function add_action(name, deadzone = 0.2) {
+    function addAction(name, deadzone = 0.2) {
         if (actions.has(name)) {
             throw new Error(`[input]: action ${name} already exists`);
         }
@@ -181,16 +181,16 @@ export const Input = (() => {
      * @param {ActionName} action
      * @param {number} deadzone
      */
-    function set_deadzone(action, deadzone) {
-        _get_action(action).deadzone = deadzone;
+    function setDeadzone(action, deadzone) {
+        _getAction(action).deadzone = deadzone;
     }
 
     /**
      * @param {ActionName} action
      * @param {ActionEvent} event
      */
-    function add_event(action, event) {
-        const events = _get_action(action);
+    function addEvent(action, event) {
+        const events = _getAction(action);
         if (!event || !event.is_event) {
             throw new Error(
                 `[input]: invalid event ${event} provided for ${action}, make sure you are using Input.Key, Input.Mouse, or Input.Joy`,
@@ -202,24 +202,24 @@ export const Input = (() => {
     /**
      * @param {ActionName} action
      */
-    function was_action_just_pressed(action) {
-        _get_action(action);
+    function wasActionJustPressed(action) {
+        _getAction(action);
         return !!action_states.get(action) && !last_action_states.get(action);
     }
 
     /**
      * @param {ActionName} action
      */
-    function was_action_just_released(action) {
-        _get_action(action);
+    function wasActionJustReleased(action) {
+        _getAction(action);
         return !action_states.get(action) && !!last_action_states.get(action);
     }
 
     /**
      * @param {ActionName} action
      */
-    function is_action_down(action) {
-        _get_action(action);
+    function isActionDown(action) {
+        _getAction(action);
         return !!action_states.get(action);
     }
 
@@ -248,12 +248,12 @@ export const Input = (() => {
         Key,
         Mouse,
 
-        add_action,
-        set_deadzone,
-        add_event,
+        addAction,
+        setDeadzone,
+        addEvent,
 
-        was_action_just_pressed,
-        was_action_just_released,
-        isActionDown: is_action_down,
+        wasActionJustPressed,
+        wasActionJustReleased,
+        isActionDown: isActionDown,
     };
 })();
