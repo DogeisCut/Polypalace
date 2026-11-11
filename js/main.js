@@ -54,10 +54,10 @@ Draw.create({
         gameLoop.tick(loop.deltaTime);
 
         loop.ctx.lineCap = "round"
-        loop.ctx.lineJoin = "round"
+        loop.ctx.lineJoin = "miter"
 
         View.begin(loop);
-        player.draw(loop.ctx, loop.deltaTime);
+        player.draw(loop);
         View.end(loop);
     },
     windowResized: (loop) => {

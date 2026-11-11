@@ -6,6 +6,7 @@ import { Sound } from "./modules/sound.js"
 import * as Config from "./config.js"
 
 /** @typedef {import("./modules/loop.js").Looper} Looper */
+/** @typedef {import("./view.js").DrawLooper} DrawLooper */
 
 /**
  * @typedef {Object} TrailPoint
@@ -166,10 +167,11 @@ export class Player {
     }
 
     /**
-     * @param {CanvasRenderingContext2D} ctx
-     * @param {number} dt
+     * @param {DrawLooper} loop
      */
-    draw(ctx, dt) {
+    draw(loop) {
+        const ctx = loop.ctx
+        const dt = loop.deltaTime
         this.trailColor = (this.trailColor + dt * 600) % 360;
 
         this._draw_warp_line(ctx);
@@ -203,8 +205,8 @@ export class Player {
      * @param ctx {CanvasRenderingContext2D}
      */
     _draw_warp_line(ctx) {
+        if (!this._has_warp_point()) return;
         const { savedX, savedY } = this;
-        if (savedX == null || savedY == null) return;
 
         const dx = Wrap.deltaX(this.x, savedX);
         const dy = Wrap.deltaY(this.y, savedY);
@@ -228,7 +230,9 @@ export class Player {
         })
     }
 
-    // this has to go unused because the type checker likes to complain :(
+    /**
+     * @returns {this is this & { savedX: number, savedY: number }}
+     */
     _has_warp_point() {
         return !(this.savedX == null || this.savedY == null)
     }
@@ -237,8 +241,8 @@ export class Player {
      * @param ctx {CanvasRenderingContext2D}
      */
     _draw_warp_point(ctx) {
+        if (!this._has_warp_point()) return;
         const { savedX, savedY } = this;
-        if (savedX == null || savedY == null) return;
 
         const r = PLAYER_SIZE * 1.1 + 2;
         Wrap.forEachCopy(savedX - r, savedY - r, savedX + r, savedY + r, (ox, oy) => {
@@ -318,7 +322,9 @@ export class Player {
         this._move(loop);
 
         if (Input.was_action_just_pressed("warp")) {
-            if (this.savedX == null || this.savedY == null) {
+            if (this._has_warp_point()) {
+                this._warp(this.savedX, this.savedY);
+            } else {
                 this.savedX = this.x
                 this.savedY = this.y
                 Sound.play("warp_place", {
@@ -327,8 +333,6 @@ export class Player {
                     bus: "sfx",
                     pitchScale: Math.random() * 0.4 + 0.8,
                 });
-            } else {
-                this._warp(this.savedX, this.savedY);
             }
         }
 
