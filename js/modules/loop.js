@@ -3,7 +3,7 @@ export const Loop = (() => {
         constructor({
             fixedStep = 1 / 60,
             maxUpdates = 4,
-            update = function(loop) {},
+            update = function(/** @type {any} */ loop) {},
         } = {}) {
             this.fixedStep = fixedStep;
             this.deltaTime = fixedStep; // Temp until i get some actual calculations
@@ -18,6 +18,9 @@ export const Loop = (() => {
             this.time = 0;
         }
         
+        /**
+         * @param {number} dtSeconds
+         */
         tick(dtSeconds) {
             this.accumulator += dtSeconds
 
@@ -37,7 +40,7 @@ export const Loop = (() => {
     }
 
     return {
-        create: (options) => new Loop(options),
+        create: (/** @type {{ fixedStep?: number | undefined; maxUpdates?: number | undefined; update?: ((loop: any) => void) | undefined; } | undefined} */ options) => new Loop(options),
         Class: Loop
     }
 })();

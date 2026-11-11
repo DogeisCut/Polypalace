@@ -3,9 +3,9 @@ export const Draw = (() => {
         constructor({
             width = window.innerWidth,
             height = window.innerHeight,
-            init = function(drawLoop) {},
-            draw = function(drawLoop) {},
-            windowResized = function(drawLoop) {
+            init = function(/** @type {Draw} */ drawLoop) {},
+            draw = function(/** @type {Draw} */ drawLoop) {},
+            windowResized = function(/** @type {{ canvas: { width: number; height: number; }; }} */ drawLoop) {
                 drawLoop.canvas.width = window.innerWidth
                 drawLoop.canvas.height = window.innerHeight
             },
@@ -24,7 +24,7 @@ export const Draw = (() => {
             this.canvas.height = height;
 
             let lastTimestamp = performance.now();
-            const loop = (timestamp) => {
+            const loop = (/** @type {number} */ timestamp) => {
                 this.deltaTime = (timestamp - lastTimestamp) / 1000;
                 lastTimestamp = timestamp;
 

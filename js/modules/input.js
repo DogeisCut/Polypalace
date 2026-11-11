@@ -1,3 +1,17 @@
+/**
+ * @typedef {Array<Object> & { deadzone: number }} ActionArray
+ */
+
+/**
+ * @typedef {Object} ActionEvent
+ * @property {true} is_event
+ */
+
+/**
+ * @typedef {string} ActionName
+ */
+
+
 export const Input = (() => {
     const actions = new Map()
     const action_states = new Map()
@@ -28,10 +42,18 @@ export const Input = (() => {
     const _eventProto = Object.create(null);
     _eventProto.is_event = true;
 
+    /**
+     * @param {string} type
+     */
     function _device(type) {
         const _deviceProto = Object.create(_eventProto);
         _deviceProto.device = type;
 
+        /**
+         * 
+         * @param {string | number} code 
+         * @returns {ActionEvent}
+         */
         const func = function(code) {
             let device = Object.create(_deviceProto);
             device.code = code;
@@ -118,10 +140,17 @@ export const Input = (() => {
         // TODO LATER
     });
 
+    /**
+     * @param {ActionName} name
+     */
     function add_action(name, deadzone = 0.2) {
         if (actions.has(name)) {
             throw new Error(`[input]: action ${name} already exists`)
         }
+        /**
+         * @type {ActionArray}
+         */
+        // @ts-ignore
         let arr = []
         arr.deadzone = deadzone
         actions.set(name, arr)
@@ -129,6 +158,10 @@ export const Input = (() => {
         last_action_states.set(name, false)
     }
 
+    /**
+     * @param {ActionName} action
+     * @param {number} deadzone
+     */
     function set_deadzone(action, deadzone) {
         if (!actions.has(action)) {
             throw new Error(`[input]: no such action ${action} found`)
@@ -136,6 +169,10 @@ export const Input = (() => {
         actions.get(action).deadzone = deadzone
     }
 
+    /**
+     * @param {ActionName} action
+     * @param {ActionEvent} event
+     */
     function add_event(action, event) {
         if (!actions.has(action)) {
             throw new Error(`[input]: no such action ${action} found`)
@@ -146,6 +183,9 @@ export const Input = (() => {
         actions.get(action).push(event);
     }
 
+    /**
+     * @param {ActionName} action
+     */
     function was_action_just_pressed(action) {
         if (!actions.has(action)) {
             throw new Error(`[input]: no such action ${action} found`)
@@ -153,6 +193,9 @@ export const Input = (() => {
         return action_states.get(action) && !last_action_states.get(action);
     }
 
+    /**
+     * @param {ActionName} action
+     */
     function was_action_just_released(action) {
         if (!actions.has(action)) {
             throw new Error(`[input]: no such action ${action} found`)
@@ -160,6 +203,9 @@ export const Input = (() => {
         return !action_states.get(action) && last_action_states.get(action);
     }
 
+    /**
+     * @param {ActionName} action
+     */
     function is_action_down(action) {
         if (!actions.has(action)) {
             throw new Error(`[input]: no such action ${action} found`)
