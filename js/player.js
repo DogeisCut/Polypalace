@@ -28,6 +28,8 @@ const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED = Config.PLAYER_AOE_ACTIVATION_DIST
 
 // pre calculate the ship rendering :P
 const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
+const PLAYER_WARP_POINT_SPIKES = [[1.5,0], [0.5,1], [1.5,2], [0.5,3], [1.5,4], [0.5,5]].flatMap(([s, k]) => [...Vector2.rotate(PLAYER_SIZE * s, 0, (Math.PI * 2 / 6) * k)])
+
 const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
 const TRAIL_PALETTE_LENGTH  = TRAIL_PALETTE.length;
 
@@ -284,23 +286,49 @@ export class Player {
         const r = PLAYER_SIZE * 1.1 + 2;
         Wrap.forEachCopy(savedX - r, savedY - r, savedX + r, savedY + r, (ox, oy) => {
             ctx.save();
-
-            // base
-            ctx.lineWidth = 2.5;
-            ctx.fillStyle = "#fff0f9"
-            ctx.strokeStyle = "#2b081d"
             ctx.translate(savedX + ox, savedY + oy);
-            ctx.beginPath();
-            ctx.arc(0, 0, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.stroke();
 
-            // center
-            ctx.beginPath();
+            // balls
             ctx.fillStyle = TRAIL_PALETTE[Math.floor((loop.timestamp / 10) % TRAIL_PALETTE_LENGTH)];
-            ctx.arc(0, 0, PLAYER_SIZE / 2.5, 0, Math.PI * 2);
+
+            ctx.beginPath();
+            ctx.arc(0 + (Math.random() * 2 - 1)*3, -4 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
             ctx.fill();
-            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(-4 + (Math.random() * 2 - 1)*3, 2 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.beginPath();
+            ctx.arc(4 + (Math.random() * 2 - 1)*3, 2 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // spikes
+            ctx.rotate(loop.timestamp / -100)
+            ctx.beginPath();
+            ctx.moveTo(PLAYER_WARP_POINT_SPIKES[0], PLAYER_WARP_POINT_SPIKES[1])
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[2], PLAYER_WARP_POINT_SPIKES[3])
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[4], PLAYER_WARP_POINT_SPIKES[5])
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[6], PLAYER_WARP_POINT_SPIKES[7])
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[8], PLAYER_WARP_POINT_SPIKES[9])
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[10], PLAYER_WARP_POINT_SPIKES[11])
+            ctx.closePath();
+            ctx.fill();
+            ctx.rotate(loop.timestamp / 100)
+
+            
+            const A = 1.25
+            ctx.rotate(loop.timestamp / 230)
+            ctx.beginPath();
+            ctx.moveTo(PLAYER_WARP_POINT_SPIKES[0] / A, PLAYER_WARP_POINT_SPIKES[1] / A)
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[2] / A, PLAYER_WARP_POINT_SPIKES[3] / A)
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[4] / A, PLAYER_WARP_POINT_SPIKES[5] / A)
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[6] / A, PLAYER_WARP_POINT_SPIKES[7] / A)
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[8] / A, PLAYER_WARP_POINT_SPIKES[9] / A)
+            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[10] / A, PLAYER_WARP_POINT_SPIKES[11] / A)
+            ctx.closePath();
+            ctx.fill();
+            ctx.rotate(loop.timestamp / 230)
 
             ctx.restore();
         });
