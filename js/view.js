@@ -1,5 +1,7 @@
 import * as Config from "./config.js"
 
+// TODO: move to some sort of Reusable World module
+
 /** @typedef {import("./modules/draw.js").DrawLooper} DrawLooper */
 
 export const View = (() => {
