@@ -28,11 +28,16 @@ Input.add_event("warp", Input.Key.SPACE)
 Input.add_event("warp", Input.Mouse.LEFT)
 
 async function load_assets() {
+    // Music
     await Sound.load("track1", "assets/sounds/music/track1.mp3")
 
+    // Entity
+    await Sound.load("wrap", "assets/sounds/sfx/wrap.wav")
+
+    // Player
     await Sound.load("warp_place", "assets/sounds/sfx/warp_place.wav")
     await Sound.load("warp_use", "assets/sounds/sfx/warp_use.wav")
-    await Sound.load("wrap", "assets/sounds/sfx/wrap.wav")
+    await Sound.load("aoe_attack", "assets/sounds/sfx/aoe_attack.wav")
 }
 
 

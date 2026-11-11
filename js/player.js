@@ -24,6 +24,8 @@ const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin(Math.PI * 2 / 3);
 const PLAYER_TRAIL_HALF_WIDTH = PLAYER_SIZE / 1.2;
 const PLAYER_BOUNDS_PAD = PLAYER_SIZE * 1.5; // covers ship, trail width, save marker, stroke
 
+const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED = Config.PLAYER_AOE_ACTIVATION_DISTANCE * Config.PLAYER_AOE_ACTIVATION_DISTANCE
+
 // pre calculate the ship rendering :P
 const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
 const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
@@ -32,16 +34,25 @@ export class Player {
     constructor() {
         this.x = Config.WORLD_WIDTH / 2;
         this.y = Config.WORLD_HEIGHT / 2;
+
         this.speedX = 0;
         this.speedY = 0;
+
         this.rotation = 0;
+
         /** @type {TrailPoint[]} */
         this.trail = [];
         this.trailColor = 0;
+
         /** @type {number | null} */
         this.savedX = null;
         /** @type {number | null} */
         this.savedY = null;
+
+        this.iframesTimestamp = 0;
+
+        this.aoeCooldownTimestamp = 0;
+
         this._bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     }
 
@@ -174,7 +185,7 @@ export class Player {
         const dt = loop.deltaTime
         this.trailColor = (this.trailColor + dt * 600) % 360;
 
-        this._draw_warp_line(ctx);
+        this._draw_warp_line(loop);
         const b = this._compute_bounds();
         Wrap.forEachCopy(b.minX, b.minY, b.maxX, b.maxY, (ox, oy) => {
             ctx.save();
@@ -202,10 +213,11 @@ export class Player {
     }
 
     /**
-     * @param ctx {CanvasRenderingContext2D}
+     * @param loop {DrawLooper}
      */
-    _draw_warp_line(ctx) {
+    _draw_warp_line(loop) {
         if (!this._has_warp_point()) return;
+        const ctx = loop.ctx
         const { savedX, savedY } = this;
 
         const dx = Wrap.deltaX(this.x, savedX);
@@ -213,21 +225,44 @@ export class Player {
         const x2 = this.x + dx;
         const y2 = this.y + dy;
         const pad = 4;
-        Wrap.forEachCopy(
-        Math.min(this.x, x2) - pad, Math.min(this.y, y2) - pad,
-        Math.max(this.x, x2) + pad, Math.max(this.y, y2) + pad,
-        (ox, oy) => {
-            ctx.save();
-            ctx.lineWidth = 3.5;
-            ctx.translate(ox, oy)
-            ctx.strokeStyle = "#00000020";
-            ctx.setLineDash([10]);
-            ctx.beginPath();
-            ctx.moveTo(x2, y2);
-            ctx.lineTo(this.x, this.y);
-            ctx.stroke();
-            ctx.restore();
-        })
+
+        if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED) {
+            Wrap.forEachCopy(
+                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+            (ox, oy) => {
+                ctx.save();
+                ctx.lineWidth = 3.5;
+                ctx.translate(ox, oy)
+                ctx.strokeStyle = "#00000020";
+                ctx.setLineDash([10]);
+                ctx.beginPath();
+                ctx.moveTo(x2, y2);
+                ctx.lineTo(this.x, this.y);
+                ctx.stroke();
+
+                ctx.restore();
+            })
+        } else {
+            Wrap.forEachCopy(
+                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+            (ox, oy) => {
+                ctx.save();
+
+                ctx.lineWidth = 3.5;
+                ctx.translate(ox, oy)
+                ctx.strokeStyle = "#00000020";
+                ctx.setLineDash([10]);
+                ctx.beginPath();
+                ctx.translate(x2, y2)
+                ctx.rotate(loop.timestamp / 500)
+                ctx.arc(0, 0, Config.PLAYER_AOE_ACTIVATION_DISTANCE, 0, Math.PI * 2)
+                ctx.stroke();
+
+                ctx.restore();
+            })
+        }
     }
 
     /**
@@ -248,6 +283,7 @@ export class Player {
         Wrap.forEachCopy(savedX - r, savedY - r, savedX + r, savedY + r, (ox, oy) => {
             ctx.save();
             ctx.lineWidth = 2.5;
+            ctx.strokeStyle = "#fff0f9"
             ctx.strokeStyle = "#2b081d"
             ctx.translate(savedX + ox, savedY + oy);
             ctx.beginPath();
@@ -256,16 +292,17 @@ export class Player {
             ctx.lineTo(0, -PLAYER_SIZE * 1.1);
             ctx.moveTo(PLAYER_SIZE * 1.1, 0);
             ctx.lineTo(-PLAYER_SIZE * 1.1, 0);
-            ctx.stroke();
+            ctx.fill();
             ctx.restore();
         });
     }
 
     /**
+     * @param {Looper} loop
      * @param {number} savedX
      * @param {number} savedY
      */
-    _warp(savedX, savedY) { // silly function because warp is one letter off from wrap.
+    _warp(loop, savedX, savedY) { // silly function because warp is one letter off from wrap.
         const pitchScale = Math.random() * 0.4 + 0.8
         Sound.play("warp_use", {
             volume: 0.25,
@@ -293,6 +330,8 @@ export class Player {
         this._add_trail();
         this._wrap();
 
+        this.iframesTimestamp = loop.time + Config.PLAYER_DASH_I_FRAMES_SECONDS;
+
         Sound.play("warp_use", {
             volume: 0.25,
             pan: this._get_player_sound_panning(),
@@ -307,6 +346,46 @@ export class Player {
 
     /**
      * @param {Looper} loop
+     * @param {number} x
+     * @param {number} y
+     */
+    _aoe_attack(loop, x, y) {
+        this.savedX = null
+        this.savedY = null
+        this.aoeCooldownTimestamp = loop.time + Config.PLAYER_AOE_COOLDOWN_SECONDS;
+        Sound.play("aoe_attack", {
+            volume: 0.5,
+            pan: this._get_player_sound_panning(),
+            bus: "sfx",
+            pitchScale: Math.random() * 0.4 + 0.8,
+        });
+    }
+
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
+    _place_warp(x, y) {
+        this.savedX = x
+        this.savedY = y
+        Sound.play("warp_place", {
+            volume: 0.5,
+            pan: this._get_player_sound_panning(),
+            bus: "sfx",
+            pitchScale: Math.random() * 0.4 + 0.8,
+        });
+    }
+
+    /**
+     * 
+     * @param {Looper} loop
+     */
+    _off_aoe_cooldown(loop) {
+        return loop.time > this.aoeCooldownTimestamp
+    }
+
+    /**
+     * @param {Looper} loop
      */
     tick(loop) {
         const moveX = Number(Input.is_action_down("right")) - Number(Input.is_action_down("left"));
@@ -314,25 +393,22 @@ export class Player {
         const length = Vector2.magnitude(moveX, moveY);
         const targetX = (moveX / length) * Config.PLAYER_MOVE_SPEED;
         const targetY = (moveY / length) * Config.PLAYER_MOVE_SPEED;
-        if (Math.abs(moveX) < Number.EPSILON && Math.abs(moveY) < Number.EPSILON) {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, Vector2.ZERO.x, Vector2.ZERO.y, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
-        } else {
+        if ((Math.abs(moveX) >= Number.EPSILON || Math.abs(moveY) >= Number.EPSILON) && this._off_aoe_cooldown(loop)) {
             [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(Config.PLAYER_ACCEL, loop.deltaTime))
+        } else {
+            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, Vector2.ZERO.x, Vector2.ZERO.y, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
         }
         this._move(loop);
 
-        if (Input.was_action_just_pressed("warp")) {
+        if (Input.was_action_just_pressed("warp") && this._off_aoe_cooldown(loop)) {
             if (this._has_warp_point()) {
-                this._warp(this.savedX, this.savedY);
+                if (Wrap.distanceSquared(this.x, this.y, this.savedX, this.savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED) {
+                    this._warp(loop, this.savedX, this.savedY);
+                } else {
+                    this._aoe_attack(loop, this.savedX, this.savedY);
+                }
             } else {
-                this.savedX = this.x
-                this.savedY = this.y
-                Sound.play("warp_place", {
-                    volume: 0.5,
-                    pan: this._get_player_sound_panning(),
-                    bus: "sfx",
-                    pitchScale: Math.random() * 0.4 + 0.8,
-                });
+                this._place_warp(this.x, this.y)
             }
         }
 

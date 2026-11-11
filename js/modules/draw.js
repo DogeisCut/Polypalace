@@ -26,6 +26,8 @@ export const Draw = (() => {
             this.draw = draw;
             this.windowResized = windowResized;
 
+            this.timestamp = performance.now();
+
             this.canvas = document.createElement('canvas');
             const ctx = this.canvas.getContext('2d');
             if (!ctx) {
@@ -39,10 +41,9 @@ export const Draw = (() => {
             this.canvas.width = width;
             this.canvas.height = height;
 
-            let lastTimestamp = performance.now();
             const loop = (/** @type {number} */ timestamp) => {
-                this.deltaTime = (timestamp - lastTimestamp) / 1000;
-                lastTimestamp = timestamp;
+                this.deltaTime = (timestamp - this.timestamp) / 1000;
+                this.timestamp = timestamp;
 
                 this.draw(this);
                 window.requestAnimationFrame(loop);
