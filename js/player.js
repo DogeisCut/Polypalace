@@ -26,6 +26,7 @@ const PLAYER_BOUNDS_PAD = PLAYER_SIZE * 1.5; // covers ship, trail width, save m
 
 const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED = Config.PLAYER_AOE_ACTIVATION_DISTANCE * Config.PLAYER_AOE_ACTIVATION_DISTANCE
 const PLAYER_AOE_RANGE_SQUARED = Config.PLAYER_AOE_RANGE * Config.PLAYER_AOE_RANGE
+const PLAYER_ATTACK_MIN_DIST_SQUARED = Config.PLAYER_ATTACK_MIN_DIST * Config.PLAYER_ATTACK_MIN_DIST
 
 // pre calculate the ship rendering :P
 const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
@@ -230,23 +231,25 @@ export class Player {
         const y2 = this.y + dy;
         const pad = 4;
 
-        if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED) {
-            Wrap.forEachCopy(
-                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
-                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE,
-            (ox, oy) => {
-                ctx.save();
-                ctx.lineWidth = 3.5;
-                ctx.translate(ox, oy)
-                ctx.strokeStyle = "#00000020";
-                ctx.setLineDash([10]);
-                ctx.beginPath();
-                ctx.moveTo(x2, y2);
-                ctx.lineTo(this.x, this.y);
-                ctx.stroke();
+        if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED || !Config.PLAYER_AOE_ENABLED) {
+            if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_ATTACK_MIN_DIST_SQUARED) {
+                Wrap.forEachCopy(
+                    Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                    Math.max(this.x, x2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                (ox, oy) => {
+                    ctx.save();
+                    ctx.lineWidth = 3.5;
+                    ctx.translate(ox, oy)
+                    ctx.strokeStyle = "#00000020";
+                    ctx.setLineDash([10]);
+                    ctx.beginPath();
+                    ctx.moveTo(x2, y2);
+                    ctx.lineTo(this.x, this.y);
+                    ctx.stroke();
 
-                ctx.restore();
-            })
+                    ctx.restore();
+                })
+            }
         } else {
             Wrap.forEachCopy(
                 Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
@@ -262,6 +265,25 @@ export class Player {
                 ctx.translate(x2, y2)
                 ctx.rotate(loop.timestamp / 500)
                 ctx.arc(0, 0, Config.PLAYER_AOE_ACTIVATION_DISTANCE, 0, Math.PI * 2)
+                ctx.stroke();
+
+                ctx.restore();
+            })
+
+            Wrap.forEachCopy(
+                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_RANGE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_RANGE,
+                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_RANGE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_RANGE,
+            (ox, oy) => {
+                ctx.save();
+
+                ctx.lineWidth = 3.5;
+                ctx.translate(ox, oy)
+                ctx.strokeStyle = "#00000010";
+                ctx.setLineDash([10]);
+                ctx.beginPath();
+                ctx.translate(x2, y2)
+                ctx.rotate(loop.timestamp / -1000)
+                ctx.arc(0, 0, Config.PLAYER_AOE_RANGE, 0, Math.PI * 2)
                 ctx.stroke();
 
                 ctx.restore();
@@ -356,11 +378,12 @@ export class Player {
         const dx = Wrap.deltaX(this.x, savedX);
         const dy = Wrap.deltaY(this.y, savedY);
 
-        if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
-            this.trail.shift();
+        if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_ATTACK_MIN_DIST_SQUARED) {
+            this.rotation = Vector2.angle(dx, dy);
         }
-        this.rotation = Vector2.angle(dx, dy);
+
         this._add_trail();
+        
         [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
         this.speedX *= Config.PLAYER_WARP_SPEED_BOOST;
         this.speedY *= Config.PLAYER_WARP_SPEED_BOOST;
@@ -380,6 +403,10 @@ export class Player {
             bus: "sfx",
             pitchScale,
         });
+        
+        if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
+            this.trail.shift();
+        }
     }
 
     _get_player_sound_panning() {
@@ -399,7 +426,7 @@ export class Player {
 
             const playerLaunchForce = Easing.lerp(Config.PLAYER_AOE_MAX_SPEED_BOOST, 0, Wrap.distanceSquared(this.x, this.y, savedX, savedY) / PLAYER_AOE_RANGE_SQUARED)
 
-            if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > 1) {
+            if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_ATTACK_MIN_DIST_SQUARED) {
                 const dx = Wrap.deltaX(this.x, savedX);
                 const dy = Wrap.deltaY(this.y, savedY);
 
@@ -428,8 +455,18 @@ export class Player {
      * @param {number} y
      */
     _place_warp(x, y) {
-        this.savedX = x
-        this.savedY = y
+        this.savedX = x;
+        this.savedY = y;
+        
+        // TODO: this check is duplicated and could be improved
+        const moveX = Number(Input.is_action_down("right")) - Number(Input.is_action_down("left"));
+        const moveY = Number(Input.is_action_down("down")) - Number(Input.is_action_down("up"));
+        if (Math.abs(moveX) >= Number.EPSILON || Math.abs(moveY) >= Number.EPSILON) {
+            [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
+            this.speedX *= Config.PLAYER_WARP_PLACEMENT_SPEED_BOOST;
+            this.speedY *= Config.PLAYER_WARP_PLACEMENT_SPEED_BOOST;
+        }
+        
         Sound.play("warp_place", {
             volume: 0.5,
             pan: this._get_player_sound_panning(),
@@ -464,7 +501,7 @@ export class Player {
 
         if (Input.was_action_just_pressed("warp") && this._off_aoe_cooldown(loop)) {
             if (this._has_warp_point()) {
-                if (Wrap.distanceSquared(this.x, this.y, this.savedX, this.savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED) {
+                if (Wrap.distanceSquared(this.x, this.y, this.savedX, this.savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED || !Config.PLAYER_AOE_ENABLED) {
                     this._warp(loop, this.savedX, this.savedY);
                 } else {
                     this._aoe_attack(loop, this.savedX, this.savedY);
