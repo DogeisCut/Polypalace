@@ -1,3 +1,7 @@
+/**
+ * @typedef {Readonly<{ x: number, y: number }> & Iterable<number>} Vector2Type
+ */
+
 // the goal here was to avoid having an actual vector typed that was passed around since there's shared reference concerns.
 export const Vector2 = (() => {
     const _vProto = Object.create(null)
@@ -5,6 +9,11 @@ export const Vector2 = (() => {
         yield this.x;
         yield this.y;
     }
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @returns {Vector2Type}
+     */
     function _v(x, y) {
         const v = Object.create(_vProto)
         v.x = x
@@ -14,26 +23,53 @@ export const Vector2 = (() => {
         )
     }
 
+    /**
+     * @param {number} x1
+     * @param {number} y1
+     * @param {number} x2
+     * @param {number} y2
+     */
     function distance(x1, y1, x2, y2) {
         const dx = x2 - x1;
         const dy = y2 - y1;
         return Math.hypot(dx, dy);
     }
 
+    /**
+     * @param {number} x1
+     * @param {number} y1
+     * @param {number} x2
+     * @param {number} y2
+     */
     function distanceSquared(x1, y1, x2, y2) {
         const dx = x2 - x1;
         const dy = y2 - y1;
         return dx * dx + dy * dy;
     }
 
+    /**
+     * @param {number} x1
+     * @param {number} y1
+     * @param {number} x2
+     * @param {number} y2
+     */
     function dot(x1, y1, x2, y2) {
         return x1 * x2 + y1 * y2;
     }
 
+    /**
+     * Returns 1 instead of 0 for the zero vector, so it's always safe to divide by.
+     * @param {number} x
+     * @param {number} y
+     */
     function magnitude(x, y) {
         return Math.hypot(x, y) || 1;
     }
 
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
     function normalized(x, y) {
         const mag = magnitude(x,y);
         return _v(
@@ -42,10 +78,21 @@ export const Vector2 = (() => {
         )
     }
 
+    /**
+     * @param {number} x
+     * @param {number} y
+     */
     function angle(x, y) {
         return Math.atan2(y, x);
     }
 
+    /**
+     * @param {number} x1
+     * @param {number} y1
+     * @param {number} x2
+     * @param {number} y2
+     * @param {number} t
+     */
     function lerp(x1, y1, x2, y2, t) {
         return _v(
             x1 + (x2 - x1) * t,
@@ -53,6 +100,11 @@ export const Vector2 = (() => {
         );
     }
 
+    /**
+     * @param {number} x
+     * @param {number} y
+     * @param {number} angle radians
+     */
     function rotate(x, y, angle) {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);

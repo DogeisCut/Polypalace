@@ -1,13 +1,24 @@
 import * as Config from "./config.js"
 
 export const Wrap = (() => {
+    /**
+     * @param {number} v
+     * @param {number} size
+     */
     const mod = (v, size) => ((v % size) + size) % size;
 
+    /** @param {number} x */
     const wrapX = (x) => mod(x, Config.WORLD_WIDTH);
+    /** @param {number} y */
     const wrapY = (y) => mod(y, Config.WORLD_HEIGHT);
 
     let debug = false;
 
+    /**
+     * @param {number} from
+     * @param {number} to
+     * @param {number} size
+     */
     function delta(from, to, size) {
         let d = (to - from) % size;
         if (d > size / 2) d -= size;
@@ -15,15 +26,36 @@ export const Wrap = (() => {
         return d;
     }
 
+    /**
+     * @param {number} from
+     * @param {number} to
+     */
     const deltaX = (from, to) => delta(from, to, Config.WORLD_WIDTH);
+    /**
+     * @param {number} from
+     * @param {number} to
+     */
     const deltaY = (from, to) => delta(from, to, Config.WORLD_HEIGHT);
 
+    /**
+     * @param {number} x1
+     * @param {number} y1
+     * @param {number} x2
+     * @param {number} y2
+     */
     function distanceSquared(x1, y1, x2, y2) {
         const dx = deltaX(x1, x2);
         const dy = deltaY(y1, y2);
         return dx * dx + dy * dy;
     }
 
+    /**
+     * @param {number} minX
+     * @param {number} minY
+     * @param {number} maxX
+     * @param {number} maxY
+     * @param {(offsetX: number, offsetY: number) => void} draw
+     */
     function forEachCopy(minX, minY, maxX, maxY, draw) {
         const i0 = Math.floor(-maxX / Config.WORLD_WIDTH) + 1;
         const i1 = Math.ceil((Config.WORLD_WIDTH - minX) / Config.WORLD_WIDTH) - 1;
@@ -42,6 +74,9 @@ export const Wrap = (() => {
         }
     }
 
+    /**
+     * @param {boolean} to
+     */
     function setDebug(to) {
         debug = to
     }

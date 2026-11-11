@@ -1,22 +1,31 @@
 /**
- * @typedef {Array<Object> & { deadzone: number }} ActionArray
+ * @typedef {Object} ActionEvent
+ * @property {true} is_event
+ * @property {string} device
+ * @property {string | number} code
  */
 
 /**
- * @typedef {Object} ActionEvent
- * @property {true} is_event
+ * @typedef {ActionEvent[] & { deadzone: number }} ActionArray
  */
 
 /**
  * @typedef {string} ActionName
  */
 
+/**
+ * @typedef {`${string}:${string}`} HardwareAction
+ */
 
 export const Input = (() => {
+    /** @type {Map<ActionName, ActionArray>} */
     const actions = new Map()
+    /** @type {Map<ActionName, boolean>} */
     const action_states = new Map()
+    /** @type {Map<ActionName, boolean>} */
     const last_action_states = new Map()
 
+    /** @type {Set<HardwareAction>} */
     const active_hardware = new Set();
 
     window.addEventListener('keydown', (e) => {
@@ -142,17 +151,25 @@ export const Input = (() => {
 
     /**
      * @param {ActionName} name
+     * @returns {ActionArray}
+     */
+    function _get_action(name) {
+        const events = actions.get(name)
+        if (!events) {
+            throw new Error(`[input]: no such action ${name} found`)
+        }
+        return events
+    }
+
+    /**
+     * @param {ActionName} name
      */
     function add_action(name, deadzone = 0.2) {
         if (actions.has(name)) {
             throw new Error(`[input]: action ${name} already exists`)
         }
-        /**
-         * @type {ActionArray}
-         */
-        // @ts-ignore
-        let arr = []
-        arr.deadzone = deadzone
+        /** @type {ActionArray} */
+        const arr = Object.assign(/** @type {ActionEvent[]} */ ([]), { deadzone })
         actions.set(name, arr)
         action_states.set(name, false)
         last_action_states.set(name, false)
@@ -163,10 +180,7 @@ export const Input = (() => {
      * @param {number} deadzone
      */
     function set_deadzone(action, deadzone) {
-        if (!actions.has(action)) {
-            throw new Error(`[input]: no such action ${action} found`)
-        }
-        actions.get(action).deadzone = deadzone
+        _get_action(action).deadzone = deadzone
     }
 
     /**
@@ -174,51 +188,46 @@ export const Input = (() => {
      * @param {ActionEvent} event
      */
     function add_event(action, event) {
-        if (!actions.has(action)) {
-            throw new Error(`[input]: no such action ${action} found`)
-        }
+        const events = _get_action(action)
         if (!event || !event.is_event) {
             throw new Error(`[input]: invalid event ${event} provided for ${action}, make sure you are using Input.Key, Input.Mouse, or Input.Joy`)
         }
-        actions.get(action).push(event);
+        events.push(event);
     }
 
     /**
      * @param {ActionName} action
      */
     function was_action_just_pressed(action) {
-        if (!actions.has(action)) {
-            throw new Error(`[input]: no such action ${action} found`)
-        }
-        return action_states.get(action) && !last_action_states.get(action);
+        _get_action(action)
+        return !!action_states.get(action) && !last_action_states.get(action);
     }
 
     /**
      * @param {ActionName} action
      */
     function was_action_just_released(action) {
-        if (!actions.has(action)) {
-            throw new Error(`[input]: no such action ${action} found`)
-        }
-        return !action_states.get(action) && last_action_states.get(action);
+        _get_action(action)
+        return !action_states.get(action) && !!last_action_states.get(action);
     }
 
     /**
      * @param {ActionName} action
      */
     function is_action_down(action) {
-        if (!actions.has(action)) {
-            throw new Error(`[input]: no such action ${action} found`)
-        }
-        return action_states.get(action);
+        _get_action(action)
+        return !!action_states.get(action);
     }
 
     function update() {
         actions.forEach((events, action) => {
-            last_action_states.set(action, action_states.get(action));
+            last_action_states.set(action, action_states.get(action) ?? false);
 
             let is_down = false;
             for (const event of events) {
+                /**
+                 * @type {HardwareAction}
+                 */
                 const key_string = `${event.device}:${event.code}`
                 if (active_hardware.has(key_string)) {
                     is_down = true;

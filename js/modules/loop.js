@@ -1,9 +1,25 @@
+/**
+ * @typedef {InstanceType<typeof Loop.Class>} Looper
+ */
+
 export const Loop = (() => {
-    class Loop {
+    class Looper {
+        // type checker was being real annoying
+        // aparently i have to define these up here to make it not assume these undefined
+        accumulator = 0;
+        timesUpdated = 0;
+        time = 0;
+
+        /**
+         * @param {Object} [options]
+         * @param {number} [options.fixedStep]
+         * @param {number} [options.maxUpdates]
+         * @param {(loop: Looper) => void} [options.update]
+         */
         constructor({
             fixedStep = 1 / 60,
             maxUpdates = 4,
-            update = function(/** @type {any} */ loop) {},
+            update = () => {},
         } = {}) {
             this.fixedStep = fixedStep;
             this.deltaTime = fixedStep; // Temp until i get some actual calculations
@@ -40,7 +56,8 @@ export const Loop = (() => {
     }
 
     return {
-        create: (/** @type {{ fixedStep?: number | undefined; maxUpdates?: number | undefined; update?: ((loop: any) => void) | undefined; } | undefined} */ options) => new Loop(options),
-        Class: Loop
+        /** @param {ConstructorParameters<typeof Looper>[0]} [options] */
+        create: (options) => new Looper(options),
+        Class: Looper
     }
 })();

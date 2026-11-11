@@ -1,17 +1,11 @@
 import { Draw } from "./modules/draw.js"
-import { Assets } from "./modules/assets.js"
-import { Easing } from "./modules/easing.js"
 import { Input } from "./modules/input.js"
 import { Loop } from "./modules/loop.js"
 import { Sound } from "./modules/sound.js"
-import { UI } from "./modules/ui.js"
 import { Player } from "./player.js"
 import { View } from "./view.js"
 import * as Config from "./config.js"
 import { Wrap } from "./wrap.js"
-
-let player = null
-
 
 Input.add_action("up")
 Input.add_event("up", Input.Key.UP)
@@ -42,7 +36,7 @@ async function load_assets() {
 }
 
 
-player = new Player()
+const player = new Player()
 
 
 const gameLoop = Loop.create({

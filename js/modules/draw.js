@@ -1,11 +1,23 @@
+/**
+ * @typedef {InstanceType<typeof Draw.Class>} DrawLooper
+ */
+
 export const Draw = (() => {
-    class Draw {
+    class DrawLooper {
+        /**
+         * @param {Object} [options]
+         * @param {number} [options.width]
+         * @param {number} [options.height]
+         * @param {(drawLoop: DrawLooper) => void} [options.init]
+         * @param {(drawLoop: DrawLooper) => void} [options.draw]
+         * @param {(drawLoop: DrawLooper) => void} [options.windowResized]
+         */
         constructor({
             width = window.innerWidth,
             height = window.innerHeight,
-            init = function(/** @type {Draw} */ drawLoop) {},
-            draw = function(/** @type {Draw} */ drawLoop) {},
-            windowResized = function(/** @type {{ canvas: { width: number; height: number; }; }} */ drawLoop) {
+            init = () => {},
+            draw = () => {},
+            windowResized = (drawLoop) => {
                 drawLoop.canvas.width = window.innerWidth
                 drawLoop.canvas.height = window.innerHeight
             },
@@ -15,7 +27,11 @@ export const Draw = (() => {
             this.windowResized = windowResized;
 
             this.canvas = document.createElement('canvas');
-            this.ctx = this.canvas.getContext('2d');
+            const ctx = this.canvas.getContext('2d');
+            if (!ctx) {
+                throw new Error("[draw]: couldn't get a 2d canvas context")
+            }
+            this.ctx = ctx;
             this.deltaTime = 0;
 
             document.body.appendChild(this.canvas);
@@ -41,7 +57,8 @@ export const Draw = (() => {
         }
     }
     return {
-        create: (options) => new Draw(options),
-        Class: Draw
+        /** @param {ConstructorParameters<typeof DrawLooper>[0]} [options] */
+        create: (options) => new DrawLooper(options),
+        Class: DrawLooper
     }
 })();

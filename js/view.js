@@ -1,11 +1,14 @@
 import * as Config from "./config.js"
 
+/** @typedef {import("./modules/draw.js").DrawLooper} DrawLooper */
+
 export const View = (() => {
     const BAR_COLOR = "#1a1a1a";
     let _scale = 1;
     let _offsetX = 0;
     let _offsetY = 0;
 
+    /** @param {DrawLooper} loop */
     function resize(loop) {
         const width = loop.canvas.width
         const height = loop.canvas.height
@@ -15,6 +18,7 @@ export const View = (() => {
         _offsetY = Math.floor((height - Config.WORLD_HEIGHT * _scale) / 2);
     }
 
+    /** @param {DrawLooper} loop */
     function begin(loop) {
         const ctx = loop.ctx
         ctx.save();
@@ -26,6 +30,7 @@ export const View = (() => {
         ctx.fill();
     }
 
+    /** @param {DrawLooper} loop */
     function end(loop) {
         const width = loop.canvas.width
         const height = loop.canvas.height
@@ -46,6 +51,11 @@ export const View = (() => {
         ctx.fill();
     }
 
+    /**
+     * @param {number} screenX
+     * @param {number} screenY
+     * @returns {[number, number]}
+     */
     function toWorld(screenX, screenY) {
         return [(screenX - _offsetX) / _scale, (screenY - _offsetY) / _scale];
     }

@@ -5,9 +5,19 @@ import { Input } from "./modules/input.js"
 import { Sound } from "./modules/sound.js"
 import * as Config from "./config.js"
 
+/** @typedef {import("./modules/loop.js").Looper} Looper */
+
+/**
+ * @typedef {Object} TrailPoint
+ * @property {number} x
+ * @property {number} y
+ * @property {number} rot
+ * @property {number} nx normal vector, x
+ * @property {number} ny normal vector, y
+ */
+
 const PLAYER_SIZE = 15;
 const PLAYER_TRAIL_LENGTH = 50;
-const PLAYER_TRAIL_DISTANCE_THRESHOLD = 1;
 const PLAYER_BACK_OFFSET = PLAYER_SIZE * Math.cos(Math.PI * 2 / 3);
 const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin(Math.PI * 2 / 3);
 const PLAYER_TRAIL_HALF_WIDTH = PLAYER_SIZE / 1.2;
@@ -24,9 +34,12 @@ export class Player {
         this.speedX = 0;
         this.speedY = 0;
         this.rotation = 0;
+        /** @type {TrailPoint[]} */
         this.trail = [];
         this.trailColor = 0;
+        /** @type {number | null} */
         this.savedX = null;
+        /** @type {number | null} */
         this.savedY = null;
         this._bounds = { minX: 0, minY: 0, maxX: 0, maxY: 0 };
     }
@@ -35,6 +48,9 @@ export class Player {
         return Vector2.rotate(PLAYER_BACK_OFFSET, 0, this.rotation);
     }
 
+    /**
+     * @param {Looper} loop
+     */
     _move(loop) {
         this.x += this.speedX * loop.deltaTime;
         this.y += this.speedY * loop.deltaTime;
@@ -56,6 +72,9 @@ export class Player {
         }
     }
 
+    /**
+     * @param {Looper} loop
+     */
     _face(loop) {
         if (Math.abs(this.speedX) > Number.EPSILON || Math.abs(this.speedY) > Number.EPSILON) {
             const targetRotation = Vector2.angle(this.speedX, this.speedY);
@@ -147,7 +166,8 @@ export class Player {
     }
 
     /**
-     * @param ctx {CanvasRenderingContext2D}
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} dt
      */
     draw(ctx, dt) {
         this.trailColor = (this.trailColor + dt * 600) % 360;
@@ -183,10 +203,11 @@ export class Player {
      * @param ctx {CanvasRenderingContext2D}
      */
     _draw_warp_line(ctx) {
-        if (!this._has_warp_point()) return;
+        const { savedX, savedY } = this;
+        if (savedX == null || savedY == null) return;
 
-        const dx = Wrap.deltaX(this.x, this.savedX);
-        const dy = Wrap.deltaY(this.y, this.savedY);
+        const dx = Wrap.deltaX(this.x, savedX);
+        const dy = Wrap.deltaY(this.y, savedY);
         const x2 = this.x + dx;
         const y2 = this.y + dy;
         const pad = 4;
@@ -215,14 +236,15 @@ export class Player {
      * @param ctx {CanvasRenderingContext2D}
      */
     _draw_warp_point(ctx) {
-        if (!this._has_warp_point()) return;
+        const { savedX, savedY } = this;
+        if (savedX == null || savedY == null) return;
 
         const r = PLAYER_SIZE * 1.1 + 2;
-        Wrap.forEachCopy(this.savedX - r, this.savedY - r, this.savedX + r, this.savedY + r, (ox, oy) => {
+        Wrap.forEachCopy(savedX - r, savedY - r, savedX + r, savedY + r, (ox, oy) => {
             ctx.save();
             ctx.lineWidth = 2.5;
             ctx.strokeStyle = "#2b081d"
-            ctx.translate(this.savedX + ox, this.savedY + oy);
+            ctx.translate(savedX + ox, savedY + oy);
             ctx.beginPath();
             ctx.arc(0, 0, PLAYER_SIZE / 1.1, 0, Math.PI * 2);
             ctx.moveTo(0, PLAYER_SIZE * 1.1);
@@ -234,7 +256,11 @@ export class Player {
         });
     }
 
-    _warp() { // silly function because warp is one letter off from wrap.
+    /**
+     * @param {number} savedX
+     * @param {number} savedY
+     */
+    _warp(savedX, savedY) { // silly function because warp is one letter off from wrap.
         const pitchScale = Math.random() * 0.4 + 0.8
         Sound.play("warp_use", {
             volume: 0.25,
@@ -243,15 +269,15 @@ export class Player {
             pitchScale,
         });
 
-        const dx = Wrap.deltaX(this.x, this.savedX);
-        const dy = Wrap.deltaY(this.y, this.savedY);
+        const dx = Wrap.deltaX(this.x, savedX);
+        const dy = Wrap.deltaY(this.y, savedY);
 
         if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
             this.trail.shift();
         }
         this.rotation = Vector2.angle(dx, dy);
         this._add_trail();
-        [ this.speedX, this.speedY ] = Vector2.rotate(...Vector2.RIGHT, this.rotation);
+        [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
         this.speedX *= Config.PLAYER_WARP_SPEED_BOOST;
         this.speedY *= Config.PLAYER_WARP_SPEED_BOOST;
 
@@ -274,14 +300,17 @@ export class Player {
         return Easing.lerp(-1, 1, this.x/Config.WORLD_WIDTH) / 2.0
     }
 
+    /**
+     * @param {Looper} loop
+     */
     tick(loop) {
-        const moveX = Input.is_action_down("right") - Input.is_action_down("left");
-        const moveY = Input.is_action_down("down") - Input.is_action_down("up");
+        const moveX = Number(Input.is_action_down("right")) - Number(Input.is_action_down("left"));
+        const moveY = Number(Input.is_action_down("down")) - Number(Input.is_action_down("up"));
         const length = Vector2.magnitude(moveX, moveY);
         const targetX = (moveX / length) * Config.PLAYER_MOVE_SPEED;
         const targetY = (moveY / length) * Config.PLAYER_MOVE_SPEED;
         if (Math.abs(moveX) < Number.EPSILON && Math.abs(moveY) < Number.EPSILON) {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, ...Vector2.ZERO, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
+            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, Vector2.ZERO.x, Vector2.ZERO.y, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
         } else {
             [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(Config.PLAYER_ACCEL, loop.deltaTime))
         }
@@ -298,7 +327,7 @@ export class Player {
                     pitchScale: Math.random() * 0.4 + 0.8,
                 });
             } else {
-                this._warp();
+                this._warp(this.savedX, this.savedY);
             }
         }
 
