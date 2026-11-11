@@ -53,6 +53,9 @@ Draw.create({
     draw: (loop) => {
         gameLoop.tick(loop.deltaTime);
 
+        loop.ctx.lineCap = "round"
+        loop.ctx.lineJoin = "round"
+
         View.begin(loop);
         player.draw(loop.ctx, loop.deltaTime);
         View.end(loop);
