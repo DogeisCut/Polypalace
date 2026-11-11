@@ -434,7 +434,7 @@ export class Player {
         const length = Vector2.magnitude(moveX, moveY);
         const targetX = (moveX / length) * Config.PLAYER_MOVE_SPEED;
         const targetY = (moveY / length) * Config.PLAYER_MOVE_SPEED;
-        if ((Math.abs(moveX) >= Number.EPSILON || Math.abs(moveY) >= Number.EPSILON) && this._off_aoe_cooldown(loop)) {
+        if (Math.abs(moveX) >= Number.EPSILON || Math.abs(moveY) >= Number.EPSILON) {
             [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(Config.PLAYER_ACCEL, loop.deltaTime))
         } else {
             [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, Vector2.ZERO.x, Vector2.ZERO.y, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
