@@ -57,7 +57,8 @@ export const Easing = (() => {
      * @param {number} [min]
      * @param {number} [max]
      */
-    const clamp = (value, min = 0, max = 1) => Math.min(max, Math.max(min, value));
+    const clamp = (value, min = 0, max = 1) =>
+        Math.min(max, Math.max(min, value));
 
     /** @param {number} value */
     const clamp01 = (value) => clamp(value, 0, 1);
@@ -104,7 +105,8 @@ export const Easing = (() => {
      * @param {number} [hertz]
      * @param {number} [offsetCycles]
      */
-    const phaseFromTime = (seconds, hertz = 1, offsetCycles = 0) => seconds * hertz + offsetCycles;
+    const phaseFromTime = (seconds, hertz = 1, offsetCycles = 0) =>
+        seconds * hertz + offsetCycles;
 
     /**
      * @param {CurveOrName | null} [curveOrName]
@@ -114,7 +116,8 @@ export const Easing = (() => {
         const curve = curveOrName ?? "linear";
         if (typeof curve === "function") return curve;
         const named = curves[curve];
-        if (!named) throw new Error(`[easing]: unknown curve "${String(curve)}"`);
+        if (!named)
+            throw new Error(`[easing]: unknown curve "${String(curve)}"`);
         return named;
     }
 
@@ -133,7 +136,8 @@ export const Easing = (() => {
      */
     function mirrorInOut(curveOrName) {
         const curve = resolveCurve(curveOrName);
-        return (t) => (t < HALF_CYCLE ? curve(2 * t) / 2 : 1 - curve(2 - 2 * t) / 2);
+        return (t) =>
+            t < HALF_CYCLE ? curve(2 * t) / 2 : 1 - curve(2 - 2 * t) / 2;
     }
 
     /**
@@ -174,7 +178,12 @@ export const Easing = (() => {
      */
     function makeBounceOut(rebounds = 3) {
         /** @type {BounceArc} */
-        const initialFall = { endTime: 1, centerTime: 0, halfDuration: 1, depth: 1 };
+        const initialFall = {
+            endTime: 1,
+            centerTime: 0,
+            halfDuration: 1,
+            depth: 1,
+        };
         /** @type {BounceArc[]} */
         const arcs = [initialFall];
         let elapsed = initialFall.endTime;
@@ -197,7 +206,9 @@ export const Easing = (() => {
             const arc = arcs.find((candidate) => time <= candidate.endTime);
             if (!arc) return 1;
             const offsetFromCenter = (time - arc.centerTime) / arc.halfDuration;
-            return 1 - arc.depth + arc.depth * offsetFromCenter * offsetFromCenter;
+            return (
+                1 - arc.depth + arc.depth * offsetFromCenter * offsetFromCenter
+            );
         };
     }
 
@@ -231,8 +242,10 @@ export const Easing = (() => {
 
     for (const [familyName, shapes] of Object.entries(CURVE_FAMILIES)) {
         const suffix = familyName[0].toUpperCase() + familyName.slice(1);
-        const easeIn = "easeIn" in shapes ? shapes.easeIn : mirror(shapes.easeOut);
-        const easeOut = "easeOut" in shapes ? shapes.easeOut : mirror(shapes.easeIn);
+        const easeIn =
+            "easeIn" in shapes ? shapes.easeIn : mirror(shapes.easeOut);
+        const easeOut =
+            "easeOut" in shapes ? shapes.easeOut : mirror(shapes.easeIn);
         builtCurves[`in${suffix}`] = easeIn;
         builtCurves[`out${suffix}`] = easeOut;
         builtCurves[`inOut${suffix}`] = mirrorInOut(easeIn);
@@ -254,7 +267,8 @@ export const Easing = (() => {
      * @param {number} t
      * @param {CurveOrName} [curveOrName]
      */
-    const tween = (from, to, t, curveOrName = "linear") => lerp(from, to, ease(curveOrName, t));
+    const tween = (from, to, t, curveOrName = "linear") =>
+        lerp(from, to, ease(curveOrName, t));
 
     /**
      * @param {number} value
@@ -274,14 +288,20 @@ export const Easing = (() => {
     const fadeOut = (value, start, end, curveOrName = "smoothstep") =>
         1 - fadeIn(value, start, end, curveOrName);
 
-
     /**
      * @param {number} value
      * @param {EnvelopeOptions} options
      */
     function envelope(
         value,
-        { riseFrom, riseTo, fallFrom, fallTo, riseCurve = "smoothstep", fallCurve = "smoothstep" },
+        {
+            riseFrom,
+            riseTo,
+            fallFrom,
+            fallTo,
+            riseCurve = "smoothstep",
+            fallCurve = "smoothstep",
+        },
     ) {
         if (value < riseTo) return fadeIn(value, riseFrom, riseTo, riseCurve);
         if (value <= fallFrom) return 1;
@@ -315,19 +335,22 @@ export const Easing = (() => {
          * @param {number} phase
          * @param {number} [dutyCycle]
          */
-        pulse: (phase, dutyCycle = HALF_CYCLE) => (fract(phase) < dutyCycle ? 1 : -1),
+        pulse: (phase, dutyCycle = HALF_CYCLE) =>
+            fract(phase) < dutyCycle ? 1 : -1,
         /** @param {number} phase */
         square: (phase) => wave.pulse(phase, HALF_CYCLE),
         /**
          * @param {number} phase
          * @param {number} [steepness]
          */
-        trapezoid: (phase, steepness = 2) => clamp(steepness * wave.triangle(phase), -1, 1),
+        trapezoid: (phase, steepness = 2) =>
+            clamp(steepness * wave.triangle(phase), -1, 1),
         /**
          * @param {number} phase
          * @param {number} [sharpness]
          */
-        softSquare: (phase, sharpness = 5) => Math.tanh(sharpness * wave.sine(phase)),
+        softSquare: (phase, sharpness = 5) =>
+            Math.tanh(sharpness * wave.sine(phase)),
         /**
          * @param {number} phase
          * @param {number} [steps]
@@ -350,12 +373,14 @@ export const Easing = (() => {
          * @param {number} phase
          * @param {CurveOrName} [curveOrName]
          */
-        eased: (phase, curveOrName = "smoothstep") => resolveCurve(curveOrName)(cycle.pingPong(phase)),
+        eased: (phase, curveOrName = "smoothstep") =>
+            resolveCurve(curveOrName)(cycle.pingPong(phase)),
         /**
          * @param {number} phase
          * @param {number} [dutyCycle]
          */
-        gate: (phase, dutyCycle = HALF_CYCLE) => (fract(phase) < dutyCycle ? 1 : 0),
+        gate: (phase, dutyCycle = HALF_CYCLE) =>
+            fract(phase) < dutyCycle ? 1 : 0,
         /** @param {number} phase */
         rectifiedSine: (phase) => Math.abs(wave.sine(phase)),
         /** @param {number} phase */
@@ -389,7 +414,9 @@ export const Easing = (() => {
      */
     function moveToward(current, target, maxStep) {
         const remaining = target - current;
-        return Math.abs(remaining) <= maxStep ? target : current + Math.sign(remaining) * maxStep;
+        return Math.abs(remaining) <= maxStep
+            ? target
+            : current + Math.sign(remaining) * maxStep;
     }
 
     class Smoother {
@@ -421,8 +448,14 @@ export const Easing = (() => {
          */
         update(deltaSeconds) {
             if (this.settled) return this.value;
-            this.value = damp(this.value, this.target, this.timeConstant, deltaSeconds);
-            if (Math.abs(this.target - this.value) < this.snapDistance) this.value = this.target;
+            this.value = damp(
+                this.value,
+                this.target,
+                this.timeConstant,
+                deltaSeconds,
+            );
+            if (Math.abs(this.target - this.value) < this.snapDistance)
+                this.value = this.target;
             return this.value;
         }
 
@@ -476,6 +509,6 @@ export const Easing = (() => {
 
         moveToward,
 
-        Smoother
-    }
+        Smoother,
+    };
 })();

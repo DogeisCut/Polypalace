@@ -1,9 +1,9 @@
 import { Easing } from "./modules/easing.js";
 import { Vector2 } from "./modules/vector.js";
-import { Wrap } from "./wrap.js"
-import { Input } from "./modules/input.js"
-import { Sound } from "./modules/sound.js"
-import * as Config from "./config.js"
+import { Wrap } from "./wrap.js";
+import { Input } from "./modules/input.js";
+import { Sound } from "./modules/sound.js";
+import * as Config from "./config.js";
 
 /** @typedef {import("./modules/loop.js").Looper} Looper */
 /** @typedef {import("./view.js").DrawLooper} DrawLooper */
@@ -19,21 +19,40 @@ import * as Config from "./config.js"
 
 const PLAYER_SIZE = 15;
 const PLAYER_TRAIL_LENGTH = 50;
-const PLAYER_BACK_OFFSET = PLAYER_SIZE * Math.cos(Math.PI * 2 / 3);
-const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin(Math.PI * 2 / 3);
+const PLAYER_BACK_OFFSET = PLAYER_SIZE * Math.cos((Math.PI * 2) / 3);
+const PLAYER_BACK_HALF_WIDTH = PLAYER_SIZE * Math.sin((Math.PI * 2) / 3);
 const PLAYER_TRAIL_HALF_WIDTH = PLAYER_SIZE / 1.2;
 const PLAYER_BOUNDS_PAD = PLAYER_SIZE * 1.5; // covers ship, trail width, save marker, stroke
 
-const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED = Config.PLAYER_AOE_ACTIVATION_DISTANCE * Config.PLAYER_AOE_ACTIVATION_DISTANCE
-const PLAYER_AOE_RANGE_SQUARED = Config.PLAYER_AOE_RANGE * Config.PLAYER_AOE_RANGE
-const PLAYER_ATTACK_MIN_DIST_SQUARED = Config.PLAYER_ATTACK_MIN_DIST * Config.PLAYER_ATTACK_MIN_DIST
+const PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED =
+    Config.PLAYER_AOE_ACTIVATION_DISTANCE *
+    Config.PLAYER_AOE_ACTIVATION_DISTANCE;
+const PLAYER_AOE_RANGE_SQUARED =
+    Config.PLAYER_AOE_RANGE * Config.PLAYER_AOE_RANGE;
+const PLAYER_ATTACK_MAX_ALT_BEHAVIOR_DIST_SQUARED =
+    Config.PLAYER_ATTACK_MAX_ALT_BEHAVIOR_DIST *
+    Config.PLAYER_ATTACK_MAX_ALT_BEHAVIOR_DIST;
 
 // pre calculate the ship rendering :P
-const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [...Vector2.rotate(PLAYER_SIZE, 0, (Math.PI * 2 / 3) * k)]);
-const PLAYER_WARP_POINT_SPIKES = [[1.5,0], [0.5,1], [1.5,2], [0.5,3], [1.5,4], [0.5,5]].flatMap(([s, k]) => [...Vector2.rotate(PLAYER_SIZE * s, 0, (Math.PI * 2 / 6) * k)])
+const PLAYER_TRIANGLE = [0, 1, 2].flatMap((k) => [
+    ...Vector2.rotate(PLAYER_SIZE, 0, ((Math.PI * 2) / 3) * k),
+]);
+const PLAYER_WARP_POINT_SPIKES = [
+    [1.5, 0],
+    [0.5, 1],
+    [1.5, 2],
+    [0.5, 3],
+    [1.5, 4],
+    [0.5, 5],
+].flatMap(([s, k]) => [
+    ...Vector2.rotate(PLAYER_SIZE * s, 0, ((Math.PI * 2) / 6) * k),
+]);
 
-const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
-const TRAIL_PALETTE_LENGTH  = TRAIL_PALETTE.length;
+const TRAIL_PALETTE = Array.from(
+    { length: 360 },
+    (_, h) => `hsl(${h}, 100%, 80%)`,
+);
+const TRAIL_PALETTE_LENGTH = TRAIL_PALETTE.length;
 
 // TODO: some sort of base entity class that shares a position and tick and draw function(?)
 export class Player {
@@ -94,15 +113,21 @@ export class Player {
      * @param {Looper} loop
      */
     _face(loop) {
-        if (Math.abs(this.speedX) > Number.EPSILON || Math.abs(this.speedY) > Number.EPSILON) {
+        if (
+            Math.abs(this.speedX) > Number.EPSILON ||
+            Math.abs(this.speedY) > Number.EPSILON
+        ) {
             const targetRotation = Vector2.angle(this.speedX, this.speedY);
-            
+
             let diff = targetRotation - this.rotation;
             while (diff < -Math.PI) diff += Math.PI * 2;
             while (diff > Math.PI) diff -= Math.PI * 2;
-            
-            const timeConstant = Easing.settleSecondsToTimeConstant(Config.PLAYER_TURN_SPEED);
-            this.rotation += diff * Easing.dampFactor(loop.deltaTime, timeConstant);
+
+            const timeConstant = Easing.settleSecondsToTimeConstant(
+                Config.PLAYER_TURN_SPEED,
+            );
+            this.rotation +=
+                diff * Easing.dampFactor(loop.deltaTime, timeConstant);
         }
     }
 
@@ -121,9 +146,12 @@ export class Player {
         let sizeA = Easing.ease("linear", 0) * PLAYER_TRAIL_HALF_WIDTH; // could just lerp here but i was playing arounf with different looks
         for (let i = 0; i < trail.length - 1; i++) {
             const b = trail[i + 1];
-            const sizeB = Easing.ease("linear", (i + 1) / PLAYER_TRAIL_LENGTH) * PLAYER_TRAIL_HALF_WIDTH;
+            const sizeB =
+                Easing.ease("linear", (i + 1) / PLAYER_TRAIL_LENGTH) *
+                PLAYER_TRAIL_HALF_WIDTH;
 
-            const color = TRAIL_PALETTE[(i * 7 + hueBase) % TRAIL_PALETTE_LENGTH];
+            const color =
+                TRAIL_PALETTE[(i * 7 + hueBase) % TRAIL_PALETTE_LENGTH];
             ctx.fillStyle = color;
             ctx.strokeStyle = color;
             ctx.beginPath();
@@ -161,7 +189,7 @@ export class Player {
 
         // circle eye thingy
         ctx.beginPath();
-        ctx.arc(PLAYER_SIZE / 4, 0, PLAYER_SIZE / 4, 0, Math.PI * 2)
+        ctx.arc(PLAYER_SIZE / 4, 0, PLAYER_SIZE / 4, 0, Math.PI * 2);
         ctx.fillStyle = "#2b081d";
         ctx.fill();
     }
@@ -187,8 +215,8 @@ export class Player {
      * @param {DrawLooper} loop
      */
     draw(loop) {
-        const ctx = loop.ctx
-        const dt = loop.deltaTime
+        const ctx = loop.ctx;
+        const dt = loop.deltaTime;
         this.trailColor = (this.trailColor + dt * 600) % TRAIL_PALETTE_LENGTH;
 
         this._draw_warp_line(loop);
@@ -223,7 +251,7 @@ export class Player {
      */
     _draw_warp_line(loop) {
         if (!this._has_warp_point()) return;
-        const ctx = loop.ctx
+        const ctx = loop.ctx;
         const { savedX, savedY } = this;
 
         const dx = Wrap.deltaX(this.x, savedX);
@@ -232,63 +260,101 @@ export class Player {
         const y2 = this.y + dy;
         const pad = 4;
 
-        if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED || !Config.PLAYER_AOE_ENABLED) {
-            if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_ATTACK_MIN_DIST_SQUARED) {
+        if (
+            Wrap.distanceSquared(this.x, this.y, savedX, savedY) >
+                PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED ||
+            !Config.PLAYER_AOE_ENABLED
+        ) {
+            if (
+                Wrap.distanceSquared(this.x, this.y, savedX, savedY) >
+                PLAYER_ATTACK_MAX_ALT_BEHAVIOR_DIST_SQUARED
+            ) {
                 Wrap.forEachCopy(
-                    Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
-                    Math.max(this.x, x2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE,
-                (ox, oy) => {
-                    ctx.save();
-                    ctx.lineWidth = 3.5;
-                    ctx.translate(ox, oy)
-                    ctx.strokeStyle = "#00000020";
-                    ctx.setLineDash([10]);
-                    ctx.beginPath();
-                    ctx.moveTo(x2, y2);
-                    ctx.lineTo(this.x, this.y);
-                    ctx.stroke();
+                    Math.min(this.x, x2) -
+                        pad -
+                        Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                    Math.min(this.y, y2) -
+                        pad -
+                        Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                    Math.max(this.x, x2) +
+                        pad +
+                        Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                    Math.max(this.y, y2) +
+                        pad +
+                        Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                    (ox, oy) => {
+                        ctx.save();
+                        ctx.lineWidth = 3.5;
+                        ctx.translate(ox, oy);
+                        ctx.strokeStyle = "#00000020";
+                        ctx.setLineDash([10]);
+                        ctx.beginPath();
+                        ctx.moveTo(x2, y2);
+                        ctx.lineTo(this.x, this.y);
+                        ctx.stroke();
 
-                    ctx.restore();
-                })
+                        ctx.restore();
+                    },
+                );
             }
         } else {
             Wrap.forEachCopy(
-                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_ACTIVATION_DISTANCE,
-                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_ACTIVATION_DISTANCE,
-            (ox, oy) => {
-                ctx.save();
+                Math.min(this.x, x2) -
+                    pad -
+                    Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                Math.min(this.y, y2) -
+                    pad -
+                    Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                Math.max(this.x, x2) +
+                    pad +
+                    Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                Math.max(this.y, y2) +
+                    pad +
+                    Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                (ox, oy) => {
+                    ctx.save();
 
-                ctx.lineWidth = 3.5;
-                ctx.translate(ox, oy)
-                ctx.strokeStyle = "#00000020";
-                ctx.setLineDash([10]);
-                ctx.beginPath();
-                ctx.translate(x2, y2)
-                ctx.rotate(loop.timestamp / 500)
-                ctx.arc(0, 0, Config.PLAYER_AOE_ACTIVATION_DISTANCE, 0, Math.PI * 2)
-                ctx.stroke();
+                    ctx.lineWidth = 3.5;
+                    ctx.translate(ox, oy);
+                    ctx.strokeStyle = "#00000020";
+                    ctx.setLineDash([10]);
+                    ctx.beginPath();
+                    ctx.translate(x2, y2);
+                    ctx.rotate(loop.timestamp / 500);
+                    ctx.arc(
+                        0,
+                        0,
+                        Config.PLAYER_AOE_ACTIVATION_DISTANCE,
+                        0,
+                        Math.PI * 2,
+                    );
+                    ctx.stroke();
 
-                ctx.restore();
-            })
+                    ctx.restore();
+                },
+            );
 
             Wrap.forEachCopy(
-                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_RANGE, Math.min(this.y, y2) - pad - Config.PLAYER_AOE_RANGE,
-                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_RANGE, Math.max(this.y, y2) + pad + Config.PLAYER_AOE_RANGE,
-            (ox, oy) => {
-                ctx.save();
+                Math.min(this.x, x2) - pad - Config.PLAYER_AOE_RANGE,
+                Math.min(this.y, y2) - pad - Config.PLAYER_AOE_RANGE,
+                Math.max(this.x, x2) + pad + Config.PLAYER_AOE_RANGE,
+                Math.max(this.y, y2) + pad + Config.PLAYER_AOE_RANGE,
+                (ox, oy) => {
+                    ctx.save();
 
-                ctx.lineWidth = 3.5;
-                ctx.translate(ox, oy)
-                ctx.strokeStyle = "#00000010";
-                ctx.setLineDash([10]);
-                ctx.beginPath();
-                ctx.translate(x2, y2)
-                ctx.rotate(loop.timestamp / -1000)
-                ctx.arc(0, 0, Config.PLAYER_AOE_RANGE, 0, Math.PI * 2)
-                ctx.stroke();
+                    ctx.lineWidth = 3.5;
+                    ctx.translate(ox, oy);
+                    ctx.strokeStyle = "#00000010";
+                    ctx.setLineDash([10]);
+                    ctx.beginPath();
+                    ctx.translate(x2, y2);
+                    ctx.rotate(loop.timestamp / -1000);
+                    ctx.arc(0, 0, Config.PLAYER_AOE_RANGE, 0, Math.PI * 2);
+                    ctx.stroke();
 
-                ctx.restore();
-            })
+                    ctx.restore();
+                },
+            );
         }
     }
 
@@ -296,7 +362,7 @@ export class Player {
      * @returns {this is this & { savedX: number, savedY: number }}
      */
     _has_warp_point() {
-        return !(this.savedX == null || this.savedY == null)
+        return !(this.savedX == null || this.savedY == null);
     }
 
     /**
@@ -308,58 +374,120 @@ export class Player {
         const ctx = loop.ctx;
 
         const r = PLAYER_SIZE * 1.1 + 2;
-        Wrap.forEachCopy(savedX - r, savedY - r, savedX + r, savedY + r, (ox, oy) => {
-            ctx.save();
-            ctx.translate(savedX + ox, savedY + oy);
+        Wrap.forEachCopy(
+            savedX - r,
+            savedY - r,
+            savedX + r,
+            savedY + r,
+            (ox, oy) => {
+                ctx.save();
+                ctx.translate(savedX + ox, savedY + oy);
 
-            // balls
-            ctx.fillStyle = TRAIL_PALETTE[Math.floor((loop.timestamp / 10) % TRAIL_PALETTE_LENGTH)];
+                // balls
+                ctx.fillStyle =
+                    TRAIL_PALETTE[
+                        Math.floor((loop.timestamp / 10) % TRAIL_PALETTE_LENGTH)
+                    ];
 
-            // BUG: shaking is framerate dependent and loops disagree about a single circle's position.
+                // BUG: shaking is framerate dependent and loops disagree about a single circle's position.
 
-            ctx.beginPath();
-            ctx.arc(0 + (Math.random() * 2 - 1)*3, -4 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
-            ctx.fill();
+                ctx.beginPath();
+                ctx.arc(
+                    0 + (Math.random() * 2 - 1) * 3,
+                    -4 + (Math.random() * 2 - 1) * 3,
+                    PLAYER_SIZE / 1.5,
+                    0,
+                    Math.PI * 2,
+                );
+                ctx.fill();
 
-            ctx.beginPath();
-            ctx.arc(-4 + (Math.random() * 2 - 1)*3, 2 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
-            ctx.fill();
-            
-            ctx.beginPath();
-            ctx.arc(4 + (Math.random() * 2 - 1)*3, 2 + (Math.random() * 2 - 1)*3, PLAYER_SIZE / 1.5, 0, Math.PI * 2);
-            ctx.fill();
+                ctx.beginPath();
+                ctx.arc(
+                    -4 + (Math.random() * 2 - 1) * 3,
+                    2 + (Math.random() * 2 - 1) * 3,
+                    PLAYER_SIZE / 1.5,
+                    0,
+                    Math.PI * 2,
+                );
+                ctx.fill();
 
-            // TODO: reduce the mess here
-            
-            // spikes
-            ctx.rotate(loop.timestamp / -100)
-            ctx.beginPath();
-            ctx.moveTo(PLAYER_WARP_POINT_SPIKES[0], PLAYER_WARP_POINT_SPIKES[1])
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[2], PLAYER_WARP_POINT_SPIKES[3])
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[4], PLAYER_WARP_POINT_SPIKES[5])
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[6], PLAYER_WARP_POINT_SPIKES[7])
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[8], PLAYER_WARP_POINT_SPIKES[9])
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[10], PLAYER_WARP_POINT_SPIKES[11])
-            ctx.closePath();
-            ctx.fill();
-            ctx.rotate(loop.timestamp / 100)
+                ctx.beginPath();
+                ctx.arc(
+                    4 + (Math.random() * 2 - 1) * 3,
+                    2 + (Math.random() * 2 - 1) * 3,
+                    PLAYER_SIZE / 1.5,
+                    0,
+                    Math.PI * 2,
+                );
+                ctx.fill();
 
-            
-            const A = 1.25
-            ctx.rotate(loop.timestamp / 230)
-            ctx.beginPath();
-            ctx.moveTo(PLAYER_WARP_POINT_SPIKES[0] / A, PLAYER_WARP_POINT_SPIKES[1] / A)
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[2] / A, PLAYER_WARP_POINT_SPIKES[3] / A)
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[4] / A, PLAYER_WARP_POINT_SPIKES[5] / A)
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[6] / A, PLAYER_WARP_POINT_SPIKES[7] / A)
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[8] / A, PLAYER_WARP_POINT_SPIKES[9] / A)
-            ctx.lineTo(PLAYER_WARP_POINT_SPIKES[10] / A, PLAYER_WARP_POINT_SPIKES[11] / A)
-            ctx.closePath();
-            ctx.fill();
-            ctx.rotate(loop.timestamp / 230)
+                // TODO: reduce the mess here
 
-            ctx.restore();
-        });
+                // spikes
+                ctx.rotate(loop.timestamp / -100);
+                ctx.beginPath();
+                ctx.moveTo(
+                    PLAYER_WARP_POINT_SPIKES[0],
+                    PLAYER_WARP_POINT_SPIKES[1],
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[2],
+                    PLAYER_WARP_POINT_SPIKES[3],
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[4],
+                    PLAYER_WARP_POINT_SPIKES[5],
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[6],
+                    PLAYER_WARP_POINT_SPIKES[7],
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[8],
+                    PLAYER_WARP_POINT_SPIKES[9],
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[10],
+                    PLAYER_WARP_POINT_SPIKES[11],
+                );
+                ctx.closePath();
+                ctx.fill();
+                ctx.rotate(loop.timestamp / 100);
+
+                const A = 1.25;
+                ctx.rotate(loop.timestamp / 230);
+                ctx.beginPath();
+                ctx.moveTo(
+                    PLAYER_WARP_POINT_SPIKES[0] / A,
+                    PLAYER_WARP_POINT_SPIKES[1] / A,
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[2] / A,
+                    PLAYER_WARP_POINT_SPIKES[3] / A,
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[4] / A,
+                    PLAYER_WARP_POINT_SPIKES[5] / A,
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[6] / A,
+                    PLAYER_WARP_POINT_SPIKES[7] / A,
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[8] / A,
+                    PLAYER_WARP_POINT_SPIKES[9] / A,
+                );
+                ctx.lineTo(
+                    PLAYER_WARP_POINT_SPIKES[10] / A,
+                    PLAYER_WARP_POINT_SPIKES[11] / A,
+                );
+                ctx.closePath();
+                ctx.fill();
+                ctx.rotate(loop.timestamp / 230);
+
+                ctx.restore();
+            },
+        );
     }
 
     /**
@@ -367,11 +495,12 @@ export class Player {
      * @param {number} savedX
      * @param {number} savedY
      */
-    _warp(loop, savedX, savedY) { // silly function because warp is one letter off from wrap.
-        const pitchScale = Math.random() * 0.4 + 0.8
+    _warp(loop, savedX, savedY) {
+        // silly function because warp is one letter off from wrap.
+        const pitchScale = Math.random() * 0.4 + 0.8;
         Sound.play("warp_use", {
             volume: 0.25,
-            pan: this._get_player_sound_panning(),
+            pan: this._getPlayerSoundPanning(),
             bus: "sfx",
             pitchScale,
         });
@@ -379,13 +508,20 @@ export class Player {
         const dx = Wrap.deltaX(this.x, savedX);
         const dy = Wrap.deltaY(this.y, savedY);
 
-        if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_ATTACK_MIN_DIST_SQUARED) {
+        if (
+            Wrap.distanceSquared(this.x, this.y, savedX, savedY) >
+            PLAYER_ATTACK_MAX_ALT_BEHAVIOR_DIST_SQUARED
+        ) {
             this.rotation = Vector2.angle(dx, dy);
         }
 
         this._add_trail();
-        
-        [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
+
+        [this.speedX, this.speedY] = Vector2.rotate(
+            Vector2.RIGHT.x,
+            Vector2.RIGHT.y,
+            this.rotation,
+        );
         this.speedX *= Config.PLAYER_WARP_SPEED_BOOST;
         this.speedY *= Config.PLAYER_WARP_SPEED_BOOST;
 
@@ -400,18 +536,14 @@ export class Player {
 
         Sound.play("warp_use", {
             volume: 0.25,
-            pan: this._get_player_sound_panning(),
+            pan: this._getPlayerSoundPanning(),
             bus: "sfx",
             pitchScale,
         });
-        
-        if (this.trail.length > PLAYER_TRAIL_LENGTH - 2) {
-            this.trail.shift();
-        }
     }
 
-    _get_player_sound_panning() {
-        return Easing.lerp(-1, 1, this.x/Config.WORLD_WIDTH) / 2.0
+    _getPlayerSoundPanning() {
+        return Easing.lerp(-1, 1, this.x / Config.WORLD_WIDTH) / 2.0;
     }
 
     /**
@@ -419,96 +551,149 @@ export class Player {
      * @param {number} x
      * @param {number} y
      */
-    _aoe_attack(loop, x, y) {
+    _aoeAttack(loop, x, y) {
         if (this._has_warp_point()) {
             const { savedX, savedY } = this;
 
-            this.aoeCooldownTimestamp = loop.time + Config.PLAYER_AOE_COOLDOWN_SECONDS;
+            this.aoeCooldownTimestamp =
+                loop.time + Config.PLAYER_AOE_COOLDOWN_SECONDS;
 
-            const playerLaunchForce = Easing.lerp(Config.PLAYER_AOE_MAX_SPEED_BOOST, 0, Wrap.distanceSquared(this.x, this.y, savedX, savedY) / PLAYER_AOE_RANGE_SQUARED)
+            const playerLaunchForce = Easing.lerp(
+                Config.PLAYER_AOE_MAX_SPEED_BOOST,
+                0,
+                Wrap.distanceSquared(this.x, this.y, savedX, savedY) /
+                    PLAYER_AOE_RANGE_SQUARED,
+            );
 
-            if (Wrap.distanceSquared(this.x, this.y, savedX, savedY) > PLAYER_ATTACK_MIN_DIST_SQUARED) {
+            if (
+                Wrap.distanceSquared(this.x, this.y, savedX, savedY) >
+                PLAYER_ATTACK_MAX_ALT_BEHAVIOR_DIST_SQUARED
+            ) {
                 const dx = Wrap.deltaX(this.x, savedX);
                 const dy = Wrap.deltaY(this.y, savedY);
 
                 this.rotation = Vector2.angle(-dx, -dy);
             }
-            
-            [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
+
+            [this.speedX, this.speedY] = Vector2.rotate(
+                Vector2.RIGHT.x,
+                Vector2.RIGHT.y,
+                this.rotation,
+            );
             this.speedX *= playerLaunchForce;
             this.speedY *= playerLaunchForce;
 
             Sound.play("aoe_attack", {
                 volume: 0.5,
-                pan: this._get_player_sound_panning(),
+                pan: this._getPlayerSoundPanning(),
                 bus: "sfx",
                 pitchScale: Math.random() * 0.4 + 0.8,
             });
-        };
-        
+        }
 
-        this.savedX = null
-        this.savedY = null
+        this.savedX = null;
+        this.savedY = null;
     }
 
     /**
      * @param {number} x
      * @param {number} y
      */
-    _place_warp(x, y) {
+    _placeWarp(x, y) {
         this.savedX = x;
         this.savedY = y;
-        
+
         // TODO: this check is duplicated and could be improved
-        const moveX = Number(Input.is_action_down("right")) - Number(Input.is_action_down("left"));
-        const moveY = Number(Input.is_action_down("down")) - Number(Input.is_action_down("up"));
-        if (Math.abs(moveX) >= Number.EPSILON || Math.abs(moveY) >= Number.EPSILON) {
-            [ this.speedX, this.speedY ] = Vector2.rotate(Vector2.RIGHT.x, Vector2.RIGHT.y, this.rotation);
+        const moveX =
+            Number(Input.isActionDown("right")) -
+            Number(Input.isActionDown("left"));
+        const moveY =
+            Number(Input.isActionDown("down")) -
+            Number(Input.isActionDown("up"));
+        if (
+            Math.abs(moveX) >= Number.EPSILON ||
+            Math.abs(moveY) >= Number.EPSILON
+        ) {
+            [this.speedX, this.speedY] = Vector2.rotate(
+                Vector2.RIGHT.x,
+                Vector2.RIGHT.y,
+                this.rotation,
+            );
             this.speedX *= Config.PLAYER_WARP_PLACEMENT_SPEED_BOOST;
             this.speedY *= Config.PLAYER_WARP_PLACEMENT_SPEED_BOOST;
         }
-        
+
         Sound.play("warp_place", {
             volume: 0.5,
-            pan: this._get_player_sound_panning(),
+            pan: this._getPlayerSoundPanning(),
             bus: "sfx",
             pitchScale: Math.random() * 0.4 + 0.8,
         });
     }
 
     /**
-     * 
+     *
      * @param {Looper} loop
      */
     _off_aoe_cooldown(loop) {
-        return loop.time > this.aoeCooldownTimestamp
+        return loop.time > this.aoeCooldownTimestamp;
     }
 
     /**
      * @param {Looper} loop
      */
     tick(loop) {
-        const moveX = Number(Input.is_action_down("right")) - Number(Input.is_action_down("left"));
-        const moveY = Number(Input.is_action_down("down")) - Number(Input.is_action_down("up"));
+        const moveX =
+            Number(Input.isActionDown("right")) -
+            Number(Input.isActionDown("left"));
+        const moveY =
+            Number(Input.isActionDown("down")) -
+            Number(Input.isActionDown("up"));
         const length = Vector2.magnitude(moveX, moveY);
         const targetX = (moveX / length) * Config.PLAYER_MOVE_SPEED;
         const targetY = (moveY / length) * Config.PLAYER_MOVE_SPEED;
-        if (Math.abs(moveX) >= Number.EPSILON || Math.abs(moveY) >= Number.EPSILON) {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, targetX, targetY, 1 - Math.pow(Config.PLAYER_ACCEL, loop.deltaTime))
+        if (
+            Math.abs(moveX) >= Number.EPSILON ||
+            Math.abs(moveY) >= Number.EPSILON
+        ) {
+            [this.speedX, this.speedY] = Vector2.lerp(
+                this.speedX,
+                this.speedY,
+                targetX,
+                targetY,
+                1 - Math.pow(Config.PLAYER_ACCEL, loop.deltaTime),
+            );
         } else {
-            [ this.speedX, this.speedY ] = Vector2.lerp(this.speedX, this.speedY, Vector2.ZERO.x, Vector2.ZERO.y, 1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime))
+            [this.speedX, this.speedY] = Vector2.lerp(
+                this.speedX,
+                this.speedY,
+                Vector2.ZERO.x,
+                Vector2.ZERO.y,
+                1 - Math.pow(Config.PLAYER_DECEL, loop.deltaTime),
+            );
         }
         this._move(loop);
 
-        if (Input.was_action_just_pressed("warp") && this._off_aoe_cooldown(loop)) {
+        if (
+            Input.was_action_just_pressed("warp") &&
+            this._off_aoe_cooldown(loop)
+        ) {
             if (this._has_warp_point()) {
-                if (Wrap.distanceSquared(this.x, this.y, this.savedX, this.savedY) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED || !Config.PLAYER_AOE_ENABLED) {
+                if (
+                    Wrap.distanceSquared(
+                        this.x,
+                        this.y,
+                        this.savedX,
+                        this.savedY,
+                    ) > PLAYER_AOE_ACTIVATION_DISTANCE_SQUARED ||
+                    !Config.PLAYER_AOE_ENABLED
+                ) {
                     this._warp(loop, this.savedX, this.savedY);
                 } else {
-                    this._aoe_attack(loop, this.savedX, this.savedY);
+                    this._aoeAttack(loop, this.savedX, this.savedY);
                 }
             } else {
-                this._place_warp(this.x, this.y)
+                this._placeWarp(this.x, this.y);
             }
         }
 

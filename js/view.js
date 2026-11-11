@@ -1,4 +1,4 @@
-import * as Config from "./config.js"
+import * as Config from "./config.js";
 
 // TODO: move to some sort of Reusable World module
 
@@ -12,21 +12,24 @@ export const View = (() => {
 
     /** @param {DrawLooper} loop */
     function resize(loop) {
-        const width = loop.canvas.width
-        const height = loop.canvas.height
-        const ctx = loop.ctx
-        _scale = Math.min(width / Config.WORLD_WIDTH, height / Config.WORLD_HEIGHT);
+        const width = loop.canvas.width;
+        const height = loop.canvas.height;
+        const ctx = loop.ctx;
+        _scale = Math.min(
+            width / Config.WORLD_WIDTH,
+            height / Config.WORLD_HEIGHT,
+        );
         _offsetX = Math.floor((width - Config.WORLD_WIDTH * _scale) / 2);
         _offsetY = Math.floor((height - Config.WORLD_HEIGHT * _scale) / 2);
     }
 
     /** @param {DrawLooper} loop */
     function begin(loop) {
-        const ctx = loop.ctx
+        const ctx = loop.ctx;
         ctx.save();
         ctx.translate(_offsetX, _offsetY);
         ctx.scale(_scale, _scale);
-        ctx.fillStyle = "#ffffff"
+        ctx.fillStyle = "#ffffff";
         ctx.beginPath();
         ctx.rect(0, 0, Config.WORLD_WIDTH, Config.WORLD_HEIGHT);
         ctx.fill();
@@ -34,9 +37,9 @@ export const View = (() => {
 
     /** @param {DrawLooper} loop */
     function end(loop) {
-        const width = loop.canvas.width
-        const height = loop.canvas.height
-        const ctx = loop.ctx
+        const width = loop.canvas.width;
+        const height = loop.canvas.height;
+        const ctx = loop.ctx;
         ctx.restore();
         ctx.fillStyle = BAR_COLOR;
         ctx.beginPath();
@@ -62,5 +65,13 @@ export const View = (() => {
         return [(screenX - _offsetX) / _scale, (screenY - _offsetY) / _scale];
     }
 
-    return { resize, begin, end, toWorld, get scale() { return _scale; } };
+    return {
+        resize,
+        begin,
+        end,
+        toWorld,
+        get scale() {
+            return _scale;
+        },
+    };
 })();

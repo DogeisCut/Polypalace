@@ -19,34 +19,34 @@
 
 export const Input = (() => {
     /** @type {Map<ActionName, ActionArray>} */
-    const actions = new Map()
+    const actions = new Map();
     /** @type {Map<ActionName, boolean>} */
-    const action_states = new Map()
+    const action_states = new Map();
     /** @type {Map<ActionName, boolean>} */
-    const last_action_states = new Map()
+    const last_action_states = new Map();
 
     /** @type {Set<HardwareAction>} */
     const active_hardware = new Set();
 
-    window.addEventListener('keydown', (e) => {
+    window.addEventListener("keydown", (e) => {
         if (e.repeat) return;
         active_hardware.add(`keyboard:${e.code}`);
     });
 
-    window.addEventListener('keyup', (e) => {
+    window.addEventListener("keyup", (e) => {
         active_hardware.delete(`keyboard:${e.code}`);
     });
 
-    window.addEventListener('mousedown', (e) => {
+    window.addEventListener("mousedown", (e) => {
         active_hardware.add(`mouse:${e.button}`);
     });
 
-    window.addEventListener('mouseup', (e) => {
+    window.addEventListener("mouseup", (e) => {
         active_hardware.delete(`mouse:${e.button}`);
     });
 
-    window.addEventListener('contextmenu', (e) => e.preventDefault());
-    window.addEventListener('blur', () => active_hardware.clear());
+    window.addEventListener("contextmenu", (e) => e.preventDefault());
+    window.addEventListener("blur", () => active_hardware.clear());
 
     const _eventProto = Object.create(null);
     _eventProto.is_event = true;
@@ -59,78 +59,78 @@ export const Input = (() => {
         _deviceProto.device = type;
 
         /**
-         * 
-         * @param {string | number} code 
+         *
+         * @param {string | number} code
          * @returns {ActionEvent}
          */
-        const func = function(code) {
+        const func = function (code) {
             let device = Object.create(_deviceProto);
             device.code = code;
             return Object.freeze(device);
-        }
-        return func
+        };
+        return func;
     }
 
-    const _key = _device("keyboard")
-    const _mouse = _device("mouse")
-    const _mouse_wheel = _device("mouse_wheel")
-    const _joy = _device("joy")
+    const _key = _device("keyboard");
+    const _mouse = _device("mouse");
+    const _mouse_wheel = _device("mouse_wheel");
+    const _joy = _device("joy");
 
     // Ideally we'd have physical key support, control combos, and such like godot, but thats for super later.
 
     const Key = Object.freeze({
-        ESCAPE: _key('Escape'),
-        ENTER: _key('Enter'),
-        SPACE: _key('Space'),
-        TAB: _key('Tab'),
-        BACKSPACE: _key('Backspace'),
-        
-        SHIFT: _key('ShiftLeft'), // shift exists on both sides. TODO: figure out how to handle this later
-        CTRL: _key('ControlLeft'),
-        ALT: _key('AltLeft'),
+        ESCAPE: _key("Escape"),
+        ENTER: _key("Enter"),
+        SPACE: _key("Space"),
+        TAB: _key("Tab"),
+        BACKSPACE: _key("Backspace"),
 
-        UP: _key('ArrowUp'),
-        DOWN: _key('ArrowDown'),
-        LEFT: _key('ArrowLeft'),
-        RIGHT: _key('ArrowRight'),
+        SHIFT: _key("ShiftLeft"), // shift exists on both sides. TODO: figure out how to handle this later
+        CTRL: _key("ControlLeft"),
+        ALT: _key("AltLeft"),
 
-        KEY_A: _key('KeyA'),
-        KEY_B: _key('KeyB'),
-        KEY_C: _key('KeyC'),
-        KEY_D: _key('KeyD'),
-        KEY_E: _key('KeyE'),
-        KEY_F: _key('KeyF'),
-        KEY_G: _key('KeyG'),
-        KEY_H: _key('KeyH'),
-        KEY_I: _key('KeyI'),
-        KEY_J: _key('KeyJ'),
-        KEY_K: _key('KeyK'),
-        KEY_L: _key('KeyL'),
-        KEY_M: _key('KeyM'),
-        KEY_N: _key('KeyN'),
-        KEY_O: _key('KeyO'),
-        KEY_P: _key('KeyP'),
-        KEY_Q: _key('KeyQ'),
-        KEY_R: _key('KeyR'),
-        KEY_S: _key('KeyS'),
-        KEY_T: _key('KeyT'),
-        KEY_U: _key('KeyU'),
-        KEY_V: _key('KeyV'),
-        KEY_W: _key('KeyW'),
-        KEY_X: _key('KeyX'),
-        KEY_Y: _key('KeyY'),
-        KEY_Z: _key('KeyZ'),
+        UP: _key("ArrowUp"),
+        DOWN: _key("ArrowDown"),
+        LEFT: _key("ArrowLeft"),
+        RIGHT: _key("ArrowRight"),
 
-        NUM_0: _key('Digit0'),
-        NUM_1: _key('Digit1'),
-        NUM_2: _key('Digit2'),
-        NUM_3: _key('Digit3'),
-        NUM_4: _key('Digit4'),
-        NUM_5: _key('Digit5'),
-        NUM_6: _key('Digit6'),
-        NUM_7: _key('Digit7'),
-        NUM_8: _key('Digit8'),
-        NUM_9: _key('Digit9'),
+        KEY_A: _key("KeyA"),
+        KEY_B: _key("KeyB"),
+        KEY_C: _key("KeyC"),
+        KEY_D: _key("KeyD"),
+        KEY_E: _key("KeyE"),
+        KEY_F: _key("KeyF"),
+        KEY_G: _key("KeyG"),
+        KEY_H: _key("KeyH"),
+        KEY_I: _key("KeyI"),
+        KEY_J: _key("KeyJ"),
+        KEY_K: _key("KeyK"),
+        KEY_L: _key("KeyL"),
+        KEY_M: _key("KeyM"),
+        KEY_N: _key("KeyN"),
+        KEY_O: _key("KeyO"),
+        KEY_P: _key("KeyP"),
+        KEY_Q: _key("KeyQ"),
+        KEY_R: _key("KeyR"),
+        KEY_S: _key("KeyS"),
+        KEY_T: _key("KeyT"),
+        KEY_U: _key("KeyU"),
+        KEY_V: _key("KeyV"),
+        KEY_W: _key("KeyW"),
+        KEY_X: _key("KeyX"),
+        KEY_Y: _key("KeyY"),
+        KEY_Z: _key("KeyZ"),
+
+        NUM_0: _key("Digit0"),
+        NUM_1: _key("Digit1"),
+        NUM_2: _key("Digit2"),
+        NUM_3: _key("Digit3"),
+        NUM_4: _key("Digit4"),
+        NUM_5: _key("Digit5"),
+        NUM_6: _key("Digit6"),
+        NUM_7: _key("Digit7"),
+        NUM_8: _key("Digit8"),
+        NUM_9: _key("Digit9"),
     });
 
     const Mouse = Object.freeze({
@@ -154,11 +154,11 @@ export const Input = (() => {
      * @returns {ActionArray}
      */
     function _get_action(name) {
-        const events = actions.get(name)
+        const events = actions.get(name);
         if (!events) {
-            throw new Error(`[input]: no such action ${name} found`)
+            throw new Error(`[input]: no such action ${name} found`);
         }
-        return events
+        return events;
     }
 
     /**
@@ -166,13 +166,15 @@ export const Input = (() => {
      */
     function add_action(name, deadzone = 0.2) {
         if (actions.has(name)) {
-            throw new Error(`[input]: action ${name} already exists`)
+            throw new Error(`[input]: action ${name} already exists`);
         }
         /** @type {ActionArray} */
-        const arr = Object.assign(/** @type {ActionEvent[]} */ ([]), { deadzone })
-        actions.set(name, arr)
-        action_states.set(name, false)
-        last_action_states.set(name, false)
+        const arr = Object.assign(/** @type {ActionEvent[]} */ ([]), {
+            deadzone,
+        });
+        actions.set(name, arr);
+        action_states.set(name, false);
+        last_action_states.set(name, false);
     }
 
     /**
@@ -180,7 +182,7 @@ export const Input = (() => {
      * @param {number} deadzone
      */
     function set_deadzone(action, deadzone) {
-        _get_action(action).deadzone = deadzone
+        _get_action(action).deadzone = deadzone;
     }
 
     /**
@@ -188,9 +190,11 @@ export const Input = (() => {
      * @param {ActionEvent} event
      */
     function add_event(action, event) {
-        const events = _get_action(action)
+        const events = _get_action(action);
         if (!event || !event.is_event) {
-            throw new Error(`[input]: invalid event ${event} provided for ${action}, make sure you are using Input.Key, Input.Mouse, or Input.Joy`)
+            throw new Error(
+                `[input]: invalid event ${event} provided for ${action}, make sure you are using Input.Key, Input.Mouse, or Input.Joy`,
+            );
         }
         events.push(event);
     }
@@ -199,7 +203,7 @@ export const Input = (() => {
      * @param {ActionName} action
      */
     function was_action_just_pressed(action) {
-        _get_action(action)
+        _get_action(action);
         return !!action_states.get(action) && !last_action_states.get(action);
     }
 
@@ -207,7 +211,7 @@ export const Input = (() => {
      * @param {ActionName} action
      */
     function was_action_just_released(action) {
-        _get_action(action)
+        _get_action(action);
         return !action_states.get(action) && !!last_action_states.get(action);
     }
 
@@ -215,7 +219,7 @@ export const Input = (() => {
      * @param {ActionName} action
      */
     function is_action_down(action) {
-        _get_action(action)
+        _get_action(action);
         return !!action_states.get(action);
     }
 
@@ -228,14 +232,14 @@ export const Input = (() => {
                 /**
                  * @type {HardwareAction}
                  */
-                const key_string = `${event.device}:${event.code}`
+                const key_string = `${event.device}:${event.code}`;
                 if (active_hardware.has(key_string)) {
                     is_down = true;
                     break;
                 }
             }
             action_states.set(action, is_down);
-        })
+        });
     }
 
     return {
@@ -243,13 +247,13 @@ export const Input = (() => {
 
         Key,
         Mouse,
-        
+
         add_action,
         set_deadzone,
         add_event,
 
         was_action_just_pressed,
         was_action_just_released,
-        is_action_down
-    }
+        isActionDown: is_action_down,
+    };
 })();

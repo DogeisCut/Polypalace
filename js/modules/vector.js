@@ -4,23 +4,21 @@
 
 // the goal here was to avoid having an actual vector typed that was passed around since there's shared reference concerns.
 export const Vector2 = (() => {
-    const _vProto = Object.create(null)
-    _vProto[Symbol.iterator] = function*() {
+    const _vProto = Object.create(null);
+    _vProto[Symbol.iterator] = function* () {
         yield this.x;
         yield this.y;
-    }
+    };
     /**
      * @param {number} x
      * @param {number} y
      * @returns {Vector2Type}
      */
     function _v(x, y) {
-        const v = Object.create(_vProto)
-        v.x = x
-        v.y = y
-        return Object.freeze(
-            v
-        )
+        const v = Object.create(_vProto);
+        v.x = x;
+        v.y = y;
+        return Object.freeze(v);
     }
 
     /**
@@ -71,11 +69,8 @@ export const Vector2 = (() => {
      * @param {number} y
      */
     function normalized(x, y) {
-        const mag = magnitude(x,y);
-        return _v(
-            x / mag,
-            y / mag,
-        )
+        const mag = magnitude(x, y);
+        return _v(x / mag, y / mag);
     }
 
     /**
@@ -94,10 +89,7 @@ export const Vector2 = (() => {
      * @param {number} t
      */
     function lerp(x1, y1, x2, y2, t) {
-        return _v(
-            x1 + (x2 - x1) * t,
-            y1 + (y2 - y1) * t
-        );
+        return _v(x1 + (x2 - x1) * t, y1 + (y2 - y1) * t);
     }
 
     /**
@@ -108,10 +100,7 @@ export const Vector2 = (() => {
     function rotate(x, y, angle) {
         const cos = Math.cos(angle);
         const sin = Math.sin(angle);
-        return _v(
-            x * cos - y * sin,
-            x * sin + y * cos
-        );
+        return _v(x * cos - y * sin, x * sin + y * cos);
     }
 
     const ZERO = _v(0, 0);
@@ -139,5 +128,5 @@ export const Vector2 = (() => {
         RIGHT,
         ONE,
         INF,
-    }
+    };
 })();

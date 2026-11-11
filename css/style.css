@@ -15,7 +15,7 @@ body {
 body {
     background: #f0f0f0;
     overflow: hidden;
-    font-family: 'Dreamscaper', sans-serif;
+    font-family: "Dreamscaper", sans-serif;
 }
 
 [hidden] {
@@ -29,6 +29,6 @@ body.cursor-hidden canvas {
 /* ========================== Fonts ========================== */
 
 @font-face {
-  font-family: Dreamscaper;
-  src: url(../assets/fonts/Dreamscaper.ttf)
+    font-family: Dreamscaper;
+    src: url(../assets/fonts/Dreamscaper.ttf);
 }

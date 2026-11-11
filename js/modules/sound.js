@@ -1,4 +1,4 @@
-import { Assets } from "./assets.js"
+import { Assets } from "./assets.js";
 
 /**
  * @typedef {AudioNode | string} SoundBus
@@ -17,9 +17,11 @@ export const Sound = (() => {
      */
     function _require_ctx() {
         if (!ctx) {
-            throw new Error(`[sound]: audio context doesn't exist yet, call Sound.unlock() first`)
+            throw new Error(
+                `[sound]: audio context doesn't exist yet, call Sound.unlock() first`,
+            );
         }
-        return ctx
+        return ctx;
     }
 
     // TODO: splash screen
@@ -28,11 +30,13 @@ export const Sound = (() => {
      */
     function unlock() {
         if (!ctx) {
-            const AudioContextClass = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
+            const AudioContextClass =
+                window.AudioContext ||
+                /** @type {any} */ (window).webkitAudioContext;
             ctx = new AudioContextClass();
             create_bus("master", ctx.destination);
         }
-        if (ctx.state === 'suspended') {
+        if (ctx.state === "suspended") {
             ctx.resume();
         }
         return ctx;
@@ -46,10 +50,15 @@ export const Sound = (() => {
         try {
             const audioCtx = unlock();
             const rawData = await Assets.load(name, url);
-            const audioBuffer = await audioCtx.decodeAudioData(rawData.slice(0));
+            const audioBuffer = await audioCtx.decodeAudioData(
+                rawData.slice(0),
+            );
             buffers.set(name, audioBuffer);
         } catch (error) {
-            console.error(`[sound]: failed to load sound ${name} (${url}):`, error)
+            console.error(
+                `[sound]: failed to load sound ${name} (${url}):`,
+                error,
+            );
         }
     }
 
@@ -59,16 +68,16 @@ export const Sound = (() => {
      */
     function create_bus(name, destination = "master") {
         if (busses.has(name)) {
-            throw new Error(`[sound]: bus ${name} already exists`)
+            throw new Error(`[sound]: bus ${name} already exists`);
         }
 
         if (typeof destination === "string") {
-            destination = get_bus(destination)
+            destination = get_bus(destination);
         }
 
-        const gainNode = _require_ctx().createGain()
-        gainNode.connect(destination)
-        busses.set(name, gainNode)
+        const gainNode = _require_ctx().createGain();
+        gainNode.connect(destination);
+        busses.set(name, gainNode);
     }
 
     /**
@@ -76,11 +85,11 @@ export const Sound = (() => {
      * @returns {GainNode}
      */
     function get_bus(name) {
-        const bus = busses.get(name)
+        const bus = busses.get(name);
         if (!bus) {
-            throw new Error(`[sound]: no such bus ${name} exists`)
+            throw new Error(`[sound]: no such bus ${name} exists`);
         }
-        return bus
+        return bus;
     }
 
     /**
@@ -97,10 +106,10 @@ export const Sound = (() => {
      */
     function connect_bus(from, to) {
         if (!busses.has(from)) {
-            throw new Error(`[sound]: no such source bus ${from} exists`)
+            throw new Error(`[sound]: no such source bus ${from} exists`);
         }
         if (!busses.has(to)) {
-            throw new Error(`[sound]: no such destination bus ${to} exists`)
+            throw new Error(`[sound]: no such destination bus ${to} exists`);
         }
         //TODO
     }
@@ -114,20 +123,23 @@ export const Sound = (() => {
      * @param {number} [options.pan]
      * @param {SoundBus} [options.bus]
      */
-    function play(name, {
-        loop = false,
-        volume = 1.0,
-        pitchScale = 1.0,
-        pan = 0.0,
-        bus = "master",
-    } = {}) {
+    function play(
+        name,
+        {
+            loop = false,
+            volume = 1.0,
+            pitchScale = 1.0,
+            pan = 0.0,
+            bus = "master",
+        } = {},
+    ) {
         const buffer = buffers.get(name);
         if (!ctx || !buffer) return;
 
         if (typeof bus === "string") {
-            bus = get_bus(bus)
+            bus = get_bus(bus);
         }
-        
+
         const source = ctx.createBufferSource();
         source.buffer = buffer;
         source.loop = loop;
@@ -143,7 +155,7 @@ export const Sound = (() => {
         panner.connect(gainNode);
 
         gainNode.connect(bus);
-        
+
         source.start(0);
     }
 

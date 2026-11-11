@@ -33,31 +33,30 @@ export const Loop = (() => {
             this.timesUpdated = 0;
             this.time = 0;
         }
-        
+
         /**
          * @param {number} dtSeconds
          */
         tick(dtSeconds) {
-            this.accumulator += dtSeconds
+            this.accumulator += dtSeconds;
 
             this.timesUpdated = 0;
-            while(this.accumulator >= this.fixedStep) {
+            while (this.accumulator >= this.fixedStep) {
                 this.accumulator -= this.fixedStep;
                 this.time += this.fixedStep;
                 this.update(this);
                 this.timesUpdated++;
-                if (this.timesUpdated > this.maxUpdates) {
+                if (this.timesUpdated >= this.maxUpdates) {
                     this.accumulator = 0;
                     break;
                 }
             }
         }
-
     }
 
     return {
         /** @param {ConstructorParameters<typeof Looper>[0]} [options] */
         create: (options) => new Looper(options),
-        Class: Looper
-    }
+        Class: Looper,
+    };
 })();
