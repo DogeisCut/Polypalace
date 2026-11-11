@@ -35,6 +35,7 @@ const PLAYER_WARP_POINT_SPIKES = [[1.5,0], [0.5,1], [1.5,2], [0.5,3], [1.5,4], [
 const TRAIL_PALETTE = Array.from({ length: 360 }, (_, h) => `hsl(${h}, 100%, 80%)`);
 const TRAIL_PALETTE_LENGTH  = TRAIL_PALETTE.length;
 
+// TODO: some sort of base entity class that shares a position and tick and draw function(?)
 export class Player {
     constructor() {
         this.x = Config.WORLD_WIDTH / 2;
